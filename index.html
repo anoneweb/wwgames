@@ -523,5 +523,245 @@ const firebaseConfig = {
     // Show default section on load
     showSection("register");
   </script>
+  <!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Werewolf Private Chat - Pemain & Moderator</title>
+<style>
+  body { font-family: Arial, sans-serif; padding: 20px; background: #f3f7ff; }
+  h2, h3 { color: #334466; }
+  input, select, button { font-size: 1rem; }
+  #private-chat-messages, #admin-private-chat-messages {
+    height: 200px; overflow-y: auto; border: 1px solid #c1c9dd; padding: 10px; background: #fff;
+    margin-bottom: 8px;
+    white-space: pre-wrap;
+  }
+  .sender-player { font-weight: bold; color: #1a2a6c; }
+  .sender-moderator { font-weight: bold; color: #4b6cb7; }
+</style>
+</head>
+<body>
+
+<h2>Login Pemain</h2>
+<label>Nama Pemain: <input type="text" id="playerName" /></label><br /><br />
+<label>Kode Game: <input type="text" id="gameCode" /></label><br /><br />
+<button onclick="loginPlayer()">Masuk Sebagai Pemain</button>
+
+<div id="private-chat-container" style="display:none; max-width:480px; margin-top:20px;">
+  <h3>Chat Pribadi dengan Tuhan (Moderator)</h3>
+  <div id="private-chat-messages"></div>
+  <input type="text" id="privateChatInput" placeholder="Ketik pesan..." style="width:100%; padding:8px; box-sizing:border-box;" />
+  <button onclick="sendPrivateMessage()">Kirim</button>
+</div>
+
+<hr style="margin:40px 0;" />
+
+<h2>Panel Moderator</h2>
+<label>Kode Game: <input type="text" id="adminPrivateChatGameCode" /></label>
+<button onclick="loadPlayers()">Muat Daftar Pemain</button><br /><br />
+
+<select id="playerList" size="6" style="width: 300px;"></select><br /><br />
+
+<div id="admin-private-chat-container" style="display:none; max-width:480px;">
+  <h3>Chat Pribadi dengan Pemain</h3>
+  <div id="admin-private-chat-messages"></div>
+  <input type="text" id="adminPrivateChatInput" placeholder="Ketik pesan moderator..." style="width:100%; padding:8px; box-sizing:border-box;" disabled />
+  <button id="adminPrivateSendBtn" onclick="sendAdminPrivateMessage()" disabled>Kirim</button>
+</div>
+
+<!-- Firebase App (the core Firebase SDK) -->
+<script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-app-compat.js"></script>
+<!-- Firebase Firestore -->
+<script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-firestore-compat.js"></script>
+
+<script>
+  // TODO: Ganti konfigurasi ini dengan project Firebase-mu sendiri
+  const firebaseConfig = {
+    apiKey: "YOUR_API_KEY_HERE",
+    authDomain: "YOUR_PROJECT_ID.firebaseapp.com",
+    projectId: "YOUR_PROJECT_ID",
+    storageBucket: "YOUR_PROJECT_ID.appspot.com",
+    messagingSenderId: "YOUR_SENDER_ID",
+    appId: "YOUR_APP_ID"
+  };
+
+  // Initialize Firebase
+  firebase.initializeApp(firebaseConfig);
+  const db = firebase.firestore();
+
+  let currentGameCode = "";
+  let currentPlayerName = "";
+  let unsubscribePrivateChat = null;
+
+  // Fungsi untuk membuat ID chat unik per game & pemain
+  function getPrivateChatDocId(gameCode, playerName) {
+    return `${gameCode.toUpperCase()}_${playerName.toLowerCase()}`;
+  }
+
+  // ==== BAGIAN PEMAIN ====
+
+  async function loginPlayer() {
+    const nameInput = document.getElementById("playerName");
+    const codeInput = document.getElementById("gameCode");
+    const name = nameInput.value.trim();
+    const gameCode = codeInput.value.trim().toUpperCase();
+
+    if (!name || !gameCode) {
+      alert("Mohon isi Nama Pemain dan Kode Game.");
+      return;
+    }
+
+    currentGameCode = gameCode;
+    currentPlayerName = name;
+
+    // Tampilkan chat private
+    document.getElementById("private-chat-container").style.display = "block";
+
+    // Mulai listen chat
+    if (unsubscribePrivateChat) unsubscribePrivateChat();
+    listenPrivateChat(currentGameCode, currentPlayerName);
+
+    // Disable input login setelah masuk
+    nameInput.disabled = true;
+    codeInput.disabled = true;
+  }
+
+  function listenPrivateChat(gameCode, playerName) {
+    const chatMessagesDiv = document.getElementById("private-chat-messages");
+    chatMessagesDiv.innerHTML = "";
+
+    const docId = getPrivateChatDocId(gameCode, playerName);
+
+    unsubscribePrivateChat = db.collection("privateChats").doc(docId).collection("messages")
+      .orderBy("timestamp")
+      .onSnapshot(snapshot => {
+        chatMessagesDiv.innerHTML = "";
+        snapshot.forEach(doc => {
+          const data = doc.data();
+          const div = document.createElement("div");
+          div.textContent = `${data.sender}: ${data.text}`;
+          div.className = (data.sender === playerName) ? "sender-player" : "sender-moderator";
+          chatMessagesDiv.appendChild(div);
+        });
+        chatMessagesDiv.scrollTop = chatMessagesDiv.scrollHeight;
+      });
+  }
+
+  function sendPrivateMessage() {
+    const input = document.getElementById("privateChatInput");
+    const text = input.value.trim();
+    if (!text || !currentGameCode || !currentPlayerName) return;
+
+    const docId = getPrivateChatDocId(currentGameCode, currentPlayerName);
+
+    db.collection("privateChats").doc(docId).collection("messages").add({
+      sender: currentPlayerName,
+      text: text,
+      timestamp: firebase.firestore.FieldValue.serverTimestamp()
+    });
+
+    input.value = "";
+  }
+
+  // ==== BAGIAN MODERATOR ====
+
+  let adminPrivateGameCode = "";
+  let adminSelectedPlayer = "";
+  let unsubscribeAdminPrivateChat = null;
+
+  async function loadPlayers() {
+    const codeInput = document.getElementById("adminPrivateChatGameCode");
+    const gameCode = codeInput.value.trim().toUpperCase();
+    if (!gameCode) {
+      alert("Mohon masukkan Kode Game untuk memuat pemain.");
+      return;
+    }
+    adminPrivateGameCode = gameCode;
+
+    const playerList = document.getElementById("playerList");
+    playerList.innerHTML = "";
+
+    // Ambil data pemain dari collection games/{gameCode}/players
+    try {
+      const snapshot = await db.collection("games").doc(gameCode).collection("players").get();
+      if (snapshot.empty) {
+        alert("Tidak ditemukan pemain untuk game ini.");
+        return;
+      }
+
+      snapshot.forEach(doc => {
+        const player = doc.data();
+        const option = document.createElement("option");
+        option.value = player.name || doc.id;
+        option.textContent = player.name || doc.id;
+        playerList.appendChild(option);
+      });
+
+      playerList.onchange = () => {
+        adminSelectedPlayer = playerList.value;
+        if (adminSelectedPlayer) {
+          startAdminPrivateChat(adminPrivateGameCode, adminSelectedPlayer);
+          document.getElementById("admin-private-chat-container").style.display = "block";
+          document.getElementById("adminPrivateChatInput").disabled = false;
+          document.getElementById("adminPrivateSendBtn").disabled = false;
+        }
+      };
+
+      // Reset chat dan disable input send
+      document.getElementById("admin-private-chat-messages").innerHTML = "";
+      document.getElementById("adminPrivateChatInput").disabled = true;
+      document.getElementById("adminPrivateSendBtn").disabled = true;
+      adminSelectedPlayer = "";
+
+    } catch (error) {
+      alert("Gagal memuat pemain: " + error.message);
+    }
+  }
+
+  function startAdminPrivateChat(gameCode, playerName) {
+    const messagesDiv = document.getElementById("admin-private-chat-messages");
+    messagesDiv.innerHTML = "";
+
+    if (unsubscribeAdminPrivateChat) unsubscribeAdminPrivateChat();
+
+    const docId = getPrivateChatDocId(gameCode, playerName);
+
+    unsubscribeAdminPrivateChat = db.collection("privateChats").doc(docId).collection("messages")
+      .orderBy("timestamp")
+      .onSnapshot(snapshot => {
+        messagesDiv.innerHTML = "";
+        snapshot.forEach(doc => {
+          const data = doc.data();
+          const div = document.createElement("div");
+          div.textContent = `${data.sender}: ${data.text}`;
+          div.className = (data.sender === "Moderator") ? "sender-moderator" : "sender-player";
+          messagesDiv.appendChild(div);
+        });
+        messagesDiv.scrollTop = messagesDiv.scrollHeight;
+      });
+  }
+
+  function sendAdminPrivateMessage() {
+    const input = document.getElementById("adminPrivateChatInput");
+    const text = input.value.trim();
+    if (!text || !adminPrivateGameCode || !adminSelectedPlayer) return;
+
+    const docId = getPrivateChatDocId(adminPrivateGameCode, adminSelectedPlayer);
+
+    db.collection("privateChats").doc(docId).collection("messages").add({
+      sender: "Moderator",
+      text: text,
+      timestamp: firebase.firestore.FieldValue.serverTimestamp()
+    });
+
+    input.value = "";
+  }
+
+</script>
+</body>
+</html>
+
 </body>
 </html>
