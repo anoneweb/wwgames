@@ -2,7 +2,7 @@
 <html lang="id">
 <head>
   <meta charset="UTF-8" />
-  <title>Werewolf Game - Login & Admin + Chat</title>
+  <title>WEREWOLF</title>
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-firestore-compat.js"></script>
@@ -152,115 +152,6 @@
       left: 0;
       top: 2px;
     }
-    /* CHAT STYLES */
-    #chat-container {
-      margin-top: 20px;
-      border: 1.5px solid #4b6cb7;
-      border-radius: 10px;
-      height: 300px;
-      display: flex;
-      flex-direction: column;
-      background: #e6f0ff;
-    }
-    #chat-messages {
-      flex-grow: 1;
-      padding: 10px;
-      overflow-y: auto;
-      font-size: 14px;
-      color: #2f4858;
-    }
-    #chat-input-container {
-      display: flex;
-      border-top: 1.5px solid #4b6cb7;
-    }
-    #chat-input {
-      flex-grow: 1;
-      border: none;
-      padding: 12px;
-      font-size: 14px;
-      border-radius: 0 0 0 10px;
-      outline: none;
-    }
-    #chat-send-btn {
-      background: #4b6cb7;
-      border: none;
-      color: white;
-      font-weight: 600;
-      font-size: 16px;
-      padding: 0 20px;
-      cursor: pointer;
-      border-radius: 0 0 10px 0;
-      transition: background-color 0.3s ease;
-    }
-    #chat-send-btn:hover {
-      background: #3956a4;
-    }
-    /* Admin chat panel */
-    #adminChatPanel {
-      margin-top: 25px;
-      border: 1.5px solid #4b6cb7;
-      border-radius: 10px;
-      background: #f0f6ff;
-      padding: 15px;
-    }
-    #chatPlayerList {
-      max-height: 140px;
-      overflow-y: auto;
-      border: 1px solid #c1c9dd;
-      border-radius: 8px;
-      padding-left: 10px;
-      background: white;
-      margin-bottom: 15px;
-    }
-    #chatPlayerList li {
-      padding: 6px 10px;
-      cursor: pointer;
-      list-style: none;
-      border-bottom: 1px solid #c1c9dd;
-      font-weight: 600;
-      color: #4b6cb7;
-      user-select: none;
-    }
-    #chatPlayerList li.active {
-      background: #4b6cb7;
-      color: white;
-    }
-    #adminChatMessages {
-      height: 220px;
-      overflow-y: auto;
-      border: 1px solid #c1c9dd;
-      border-radius: 8px;
-      background: white;
-      padding: 10px;
-      font-size: 14px;
-      color: #2f4858;
-      margin-bottom: 10px;
-    }
-    #adminChatInputContainer {
-      display: flex;
-    }
-    #adminChatInput {
-      flex-grow: 1;
-      padding: 8px 12px;
-      font-size: 14px;
-      border: 1.5px solid #4b6cb7;
-      border-radius: 6px 0 0 6px;
-      outline: none;
-    }
-    #adminChatSendBtn {
-      background: #4b6cb7;
-      border: none;
-      color: white;
-      font-weight: 600;
-      font-size: 16px;
-      padding: 0 18px;
-      cursor: pointer;
-      border-radius: 0 6px 6px 0;
-      transition: background-color 0.3s ease;
-    }
-    #adminChatSendBtn:hover {
-      background: #3956a4;
-    }
     @media (max-width: 520px) {
       .btn-group {
         flex-direction: column;
@@ -272,7 +163,7 @@
   </style>
 </head>
 <body>
-  <h1>Werewolf Game</h1>
+  <h1>WEREWOLF GAME</h1>
 
   <div class="btn-group" role="group" aria-label="Navigation Buttons">
     <button type="button" onclick="showSection('register')">Daftar Disini</button>
@@ -300,51 +191,37 @@
     <input type="password" id="loginPassword" name="loginPassword" placeholder="Password" autocomplete="off" aria-required="true" />
     <label for="loginGameCode">Kode Putaran</label>
     <input type="text" id="loginGameCode" name="loginGameCode" placeholder="Contoh: PUTARAN1" autocomplete="off" aria-required="true" />
-    <button type="button" onclick="loginPlayer()">Login</button>
+    <button type="button" onclick="loginAndJoin()">Login & Gabung Game</button>
     <div id="loginMsg" role="alert" aria-live="polite"></div>
-
-    <!-- Info Role dan chat muncul setelah login -->
-    <div id="playerInfo" style="margin-top: 20px; display:none;">
-      <div id="role-display" aria-live="polite"></div>
-      
-      <!-- Chat container -->
-      <div id="chat-container" aria-label="Chat Pemain" role="region" aria-live="polite">
-        <div id="chat-messages" tabindex="0" aria-label="Pesan chat"></div>
-        <div id="chat-input-container">
-          <input type="text" id="chat-input" aria-label="Ketik pesan chat" placeholder="Ketik pesan dan tekan kirim..." />
-          <button type="button" id="chat-send-btn" aria-label="Kirim pesan chat">Kirim</button>
-        </div>
-      </div>
-    </div>
+    <div id="role-display" aria-live="polite" tabindex="0"></div>
   </section>
 
-  <!-- Admin Tuhan -->
+  <!-- Admin -->
   <section id="admin-section" class="section" aria-labelledby="admin-title" role="region">
-    <h2 id="admin-title">Panel Admin (Tuhan)</h2>
-    <label for="adminPassword">Masukkan Password Admin</label>
-    <input type="password" id="adminPassword" placeholder="Password Admin" autocomplete="off" aria-required="true" />
-    <button type="button" onclick="loginAdmin()">Login Admin</button>
-    <div id="adminMsg" role="alert" aria-live="polite" style="margin-top: 12px; font-weight: 600; color: #d9534f;"></div>
+    <h2 id="admin-title">Pemain gak usah kepo</h2>
+    <label for="adminPassword">Gak bisa masuk wlee</label>
+    <input type="password" id="adminPassword" name="adminPassword" placeholder="Masih usaha ta?" autocomplete="off" aria-required="true" />
+    <button type="button" onclick="checkAdmin()">No ☝️ no☝️ no☝️ ya</button>
 
-    <!-- Admin tools -->
     <div id="adminTools" style="display:none;">
-      <h3>Daftar Pemain Login</h3>
-      <ul id="playerList" tabindex="0" aria-label="Daftar Pemain"></ul>
+      <h3>Buat Putaran Baru</h3>
+      <label for="newGameCode">Kode Putaran</label>
+      <input type="text" id="newGameCode" name="newGameCode" placeholder="Contoh: PUTARAN2" autocomplete="off" />
+      <label for="rolesInput">Daftar Peran (1 per baris)</label>
+      <textarea id="rolesInput" name="rolesInput" rows="5" placeholder="Werewolf\nSeer\nVillager\nVillager"></textarea>
+      <button type="button" onclick="createGame()">Buat Game</button>
 
-      <h3>Chat dengan Pemain</h3>
-      <ul id="chatPlayerList" tabindex="0" aria-label="Daftar Pemain untuk Chat"></ul>
-      <div id="adminChatPanel" style="display:none;">
-        <div id="adminChatMessages" tabindex="0" aria-label="Pesan chat dengan pemain"></div>
-        <div id="adminChatInputContainer">
-          <input type="text" id="adminChatInput" aria-label="Ketik balasan chat" placeholder="Tulis balasan..." />
-          <button type="button" id="adminChatSendBtn">Kirim</button>
-        </div>
-      </div>
+      <h3>Lihat Pemain</h3>
+      <label for="viewGameCode">Kode Putaran</label>
+      <input type="text" id="viewGameCode" name="viewGameCode" placeholder="Contoh: PUTARAN1" autocomplete="off" />
+      <button type="button" onclick="loadPlayers()">Lihat Pemain</button>
+      <ul id="playerList" aria-live="polite" tabindex="0"></ul>
     </div>
   </section>
 
   <script>
-// For Firebase JS SDK v7.20.0 and later, measurementId is optional
+    // Firebase config, ganti dengan config firebase kamu sendiri
+    // For Firebase JS SDK v7.20.0 and later, measurementId is optional
 const firebaseConfig = {
   apiKey: "AIzaSyD5rn8JWl9WjmKkEgnX7XzZwHGW3x2VQqQ",
   authDomain: "warewolf-game-ef2fd.firebaseapp.com",
@@ -355,314 +232,296 @@ const firebaseConfig = {
   measurementId: "G-6VE9WCE2E2"
 };
 
-    // Inisialisasi Firebase
+    // Initialize Firebase
     firebase.initializeApp(firebaseConfig);
     const db = firebase.firestore();
 
-    // Global state
-    let currentPlayer = null; // {name, password, gameCode, role}
-    let currentAdmin = false;
-    let chatUnsubscribe = null;
-    let adminChatUnsubscribe = null;
-    let selectedChatPlayer = null;
+    // Simple admin password (sesuaikan sesuai kebutuhan)
+    const ADMIN_PASSWORD = "demodemo";
 
-    // Show section
+    // Show section helper
     function showSection(section) {
-      document.querySelectorAll('.section').forEach(sec => sec.classList.remove('visible'));
-      if (section === 'register') {
-        document.getElementById('register-section').classList.add('visible');
-      } else if (section === 'login') {
-        document.getElementById('login-section').classList.add('visible');
-      } else if (section === 'admin') {
-        document.getElementById('admin-section').classList.add('visible');
-      }
-    }
-    showSection('register');
+      const sections = {
+        register: "register-section",
+        login: "login-section",
+        admin: "admin-section"
+      };
+      Object.values(sections).forEach(id => {
+        document.getElementById(id).classList.remove("visible");
+      });
+      document.getElementById(sections[section]).classList.add("visible");
 
-    // Register player
+      // Clear messages and inputs when switch
+      clearMessages();
+    }
+
+    function clearMessages() {
+      document.getElementById("registerMsg").textContent = "";
+      document.getElementById("loginMsg").textContent = "";
+      document.getElementById("role-display").textContent = "";
+      document.getElementById("adminPassword").value = "";
+      document.getElementById("newGameCode").value = "";
+      document.getElementById("rolesInput").value = "";
+      document.getElementById("viewGameCode").value = "";
+      document.getElementById("playerList").innerHTML = "";
+    }
+
+    // Register player (nama & password global, tanpa peran)
     async function registerPlayer() {
-      const name = document.getElementById('regName').value.trim();
-      const password = document.getElementById('regPassword').value.trim();
-      const msg = document.getElementById('registerMsg');
+      const name = document.getElementById("regName").value.trim();
+      const password = document.getElementById("regPassword").value.trim();
+      const msg = document.getElementById("registerMsg");
 
-      msg.textContent = "";
       if (!name || !password) {
-        msg.textContent = "Nama dan password wajib diisi.";
+        msg.textContent = "Nama dan password harus diisi.";
+        msg.className = "";
         return;
       }
 
       try {
-        const playerDoc = await db.collection('players').doc(name).get();
-        if (playerDoc.exists) {
-          msg.textContent = "Nama pemain sudah terdaftar. Pilih nama lain.";
+        const playerDoc = db.collection("players").doc(name);
+        const docSnap = await playerDoc.get();
+
+        if (docSnap.exists) {
+          msg.textContent = "Nama pemain sudah terdaftar.";
+          msg.className = "";
           return;
         }
-        await db.collection('players').doc(name).set({
-          password,
-          role: "",
-          gameCode: "",
-          registeredAt: firebase.firestore.FieldValue.serverTimestamp()
+
+        await playerDoc.set({
+          password: password
         });
-        msg.textContent = "Registrasi berhasil! Silakan login.";
-        msg.classList.add('success');
-        // Reset input
-        document.getElementById('regName').value = "";
-        document.getElementById('regPassword').value = "";
-      } catch (error) {
-        msg.textContent = "Terjadi kesalahan saat registrasi.";
-        console.error(error);
+
+        msg.textContent = "Pendaftaran berhasil! Silakan login.";
+        msg.className = "success";
+        document.getElementById("regName").value = "";
+        document.getElementById("regPassword").value = "";
+      } catch (err) {
+        msg.textContent = "Gagal mendaftar pemain.";
+        msg.className = "";
+        console.error(err);
       }
     }
 
-    // Login player
-    async function loginPlayer() {
-      const name = document.getElementById('loginName').value.trim();
-      const password = document.getElementById('loginPassword').value.trim();
-      const gameCode = document.getElementById('loginGameCode').value.trim().toUpperCase();
-      const msg = document.getElementById('loginMsg');
+    // Login & join game putaran, tampilkan peran
+    async function loginAndJoin() {
+      const name = document.getElementById("loginName").value.trim();
+      const password = document.getElementById("loginPassword").value.trim();
+      const gameCode = document.getElementById("loginGameCode").value.trim().toUpperCase();
+      const msg = document.getElementById("loginMsg");
+      const roleDisplay = document.getElementById("role-display");
 
       msg.textContent = "";
+      roleDisplay.textContent = "";
+
       if (!name || !password || !gameCode) {
-        msg.textContent = "Semua kolom wajib diisi.";
+        msg.textContent = "Semua kolom harus diisi.";
+        msg.className = "";
         return;
       }
 
       try {
-        const playerDocRef = db.collection('players').doc(name);
-        const playerDoc = await playerDocRef.get();
-        if (!playerDoc.exists) {
-          msg.textContent = "Nama pemain tidak ditemukan.";
+        // Cek login pemain global
+        const playerDoc = db.collection("players").doc(name);
+        const docSnap = await playerDoc.get();
+
+        if (!docSnap.exists) {
+          msg.textContent = "Nama pemain belum terdaftar.";
+          msg.className = "";
           return;
         }
-        const data = playerDoc.data();
-        if (data.password !== password) {
+
+        if (docSnap.data().password !== password) {
           msg.textContent = "Password salah.";
+          msg.className = "";
           return;
         }
 
-        // Update gameCode & role for this round (simplified: just set gameCode here)
-        await playerDocRef.update({ gameCode });
+        // Cek apakah game putaran ada
+        const gameDoc = db.collection("games").doc(gameCode);
+        const gameSnap = await gameDoc.get();
 
-        // Ambil role dari game state (kalau sudah ada)
-        let role = data.role || "(Belum dapat peran)";
+        if (!gameSnap.exists) {
+          msg.textContent = "Kode putaran tidak ditemukan.";
+          msg.className = "";
+          return;
+        }
 
-        // Simpan global state player
-        currentPlayer = { name, password, gameCode, role };
+        // Cek apakah pemain sudah join putaran
+        const playerInGameDoc = gameDoc.collection("players").doc(name);
+        const playerInGameSnap = await playerInGameDoc.get();
 
-        // Tampilkan info role dan chat UI
-        document.getElementById('role-display').textContent = `Halo, ${name}. Peranmu: ${role}`;
-        document.getElementById('playerInfo').style.display = "block";
+        if (!playerInGameSnap.exists) {
+          // Assign role random dari daftar roles di game
+          const roles = gameSnap.data().roles || [];
+          if (roles.length === 0) {
+            msg.textContent = "Peran belum disiapkan oleh admin.";
+            msg.className = "";
+            return;
+          }
 
-        // Kosongkan chat pesan
-        document.getElementById('chat-messages').innerHTML = "";
+          // Ambil role acak dari yang belum dipakai
+          const takenRolesSnap = await gameDoc.collection("players").get();
+          const takenRoles = [];
+          takenRolesSnap.forEach(doc => {
+            const r = doc.data().role;
+            if (r) takenRoles.push(r);
+          });
 
-        // Mulai listen chat realtime dari moderator (balasan) dan kirim chat
-        startPlayerChatListener();
+          // Role yang tersedia
+          const availableRoles = roles.filter(r => !takenRoles.includes(r));
+
+          if (availableRoles.length === 0) {
+            msg.textContent = "Semua peran sudah terisi.";
+            msg.className = "";
+            return;
+          }
+
+          // Pilih random role
+          const randomIndex = Math.floor(Math.random() * availableRoles.length);
+          const selectedRole = availableRoles[randomIndex];
+
+          await playerInGameDoc.set({
+            role: selectedRole,
+            isDead: false
+          });
+          roleDisplay.textContent = `Peran kamu: ${selectedRole}`;
+        } else {
+          // Sudah join, tampilkan role & status
+          const pdata = playerInGameSnap.data();
+          const statusText = pdata.isDead ? " (Sudah dibunuh)" : "";
+          roleDisplay.textContent = `Peran kamu: ${pdata.role}${statusText}`;
+        }
 
         msg.textContent = "";
-      } catch (error) {
-        msg.textContent = "Terjadi kesalahan saat login.";
-        console.error(error);
+        msg.className = "success";
+
+        // Bersihkan input login
+        document.getElementById("loginName").value = "";
+        document.getElementById("loginPassword").value = "";
+        document.getElementById("loginGameCode").value = "";
+      } catch (err) {
+        console.error(err);
+        msg.textContent = "Terjadi kesalahan. Coba lagi.";
+        msg.className = "";
       }
     }
 
-    // Login admin
-    function loginAdmin() {
-      const password = document.getElementById('adminPassword').value;
-      const msg = document.getElementById('adminMsg');
-      msg.textContent = "";
-
-      // Password admin simpel - ganti sesuai kebutuhan
-      const ADMIN_PASSWORD = "tuhan123";
-
-      if (password === ADMIN_PASSWORD) {
-        currentAdmin = true;
-        msg.textContent = "Login admin berhasil.";
-        msg.style.color = "#28a745";
-        document.getElementById('adminTools').style.display = "block";
-
-        // Load player list realtime
-        loadPlayerListForAdmin();
-
+    // Admin login
+    function checkAdmin() {
+      const input = document.getElementById("adminPassword").value.trim();
+      if (input === ADMIN_PASSWORD) {
+        document.getElementById("adminTools").style.display = "block";
+        alert("Login admin berhasil!");
       } else {
-        currentAdmin = false;
-        msg.textContent = "Password admin salah.";
-        msg.style.color = "#d9534f";
-        document.getElementById('adminTools').style.display = "none";
+        alert("Password admin salah!");
+        document.getElementById("adminTools").style.display = "none";
       }
+      document.getElementById("adminPassword").value = "";
     }
 
-    // Load player list for admin with realtime update
-    function loadPlayerListForAdmin() {
-      db.collection('players')
-        .orderBy('registeredAt', 'desc')
-        .onSnapshot(snapshot => {
-          const playerList = document.getElementById('playerList');
-          const chatPlayerList = document.getElementById('chatPlayerList');
-          playerList.innerHTML = "";
-          chatPlayerList.innerHTML = "";
-          snapshot.forEach(doc => {
-            const p = doc.data();
-            const name = doc.id;
-            const li = document.createElement('li');
-            li.textContent = `${name} (${p.gameCode || "-"}) Role: ${p.role || "(belum)"}`;
-            playerList.appendChild(li);
-
-            // Chat player list
-            const liChat = document.createElement('li');
-            liChat.textContent = name;
-            liChat.setAttribute('tabindex', '0');
-            liChat.onclick = () => selectChatPlayer(name);
-            liChat.onkeypress = (e) => { if (e.key === 'Enter') selectChatPlayer(name); };
-            chatPlayerList.appendChild(liChat);
-          });
-        });
-    }
-
-    // Select player for admin chat
-    function selectChatPlayer(name) {
-      selectedChatPlayer = name;
-
-      // Highlight selected player in chatPlayerList
-      const chatPlayerListItems = document.querySelectorAll('#chatPlayerList li');
-      chatPlayerListItems.forEach(li => {
-        if (li.textContent === name) {
-          li.classList.add('active');
-        } else {
-          li.classList.remove('active');
-        }
-      });
-
-      // Show admin chat panel
-      const chatPanel = document.getElementById('adminChatPanel');
-      chatPanel.style.display = "flex";
-
-      // Clear chat messages
-      const adminChatMessages = document.getElementById('adminChatMessages');
-      adminChatMessages.innerHTML = "";
-
-      // Unsubscribe previous listener if ada
-      if (adminChatUnsubscribe) {
-        adminChatUnsubscribe();
+    // Create game putaran baru
+    async function createGame() {
+      const code = document.getElementById("newGameCode").value.trim().toUpperCase();
+      const rolesText = document.getElementById("rolesInput").value.trim();
+      if (!code) {
+        alert("Masukkan kode putaran.");
+        return;
       }
-
-      // Listen chat messages realtime for selected player
-      adminChatUnsubscribe = db.collection('chats')
-        .doc(`${selectedChatPlayer}`)
-        .collection('messages')
-        .orderBy('createdAt')
-        .onSnapshot(snapshot => {
-          adminChatMessages.innerHTML = "";
-          snapshot.forEach(doc => {
-            const msg = doc.data();
-            const div = document.createElement('div');
-            div.style.marginBottom = '8px';
-            div.style.padding = '6px 10px';
-            div.style.borderRadius = '6px';
-            if (msg.from === 'player') {
-              div.style.background = '#d1e7ff';
-              div.style.textAlign = 'left';
-              div.textContent = `${selectedChatPlayer}: ${msg.text}`;
-            } else if (msg.from === 'admin') {
-              div.style.background = '#4b6cb7';
-              div.style.color = 'white';
-              div.style.textAlign = 'right';
-              div.textContent = `Tuhan: ${msg.text}`;
-            }
-            adminChatMessages.appendChild(div);
-          });
-          adminChatMessages.scrollTop = adminChatMessages.scrollHeight;
-        });
-    }
-
-    // Kirim pesan chat oleh admin
-    document.getElementById('adminChatSendBtn').addEventListener('click', async () => {
-      if (!selectedChatPlayer) return;
-      const input = document.getElementById('adminChatInput');
-      const text = input.value.trim();
-      if (!text) return;
+      if (!rolesText) {
+        alert("Masukkan daftar peran.");
+        return;
+      }
+      const roles = rolesText.split("\n").map(r => r.trim()).filter(r => r.length > 0);
 
       try {
-        await db.collection('chats')
-          .doc(selectedChatPlayer)
-          .collection('messages')
-          .add({
-            text,
-            from: 'admin',
-            createdAt: firebase.firestore.FieldValue.serverTimestamp()
-          });
-        input.value = "";
-      } catch (error) {
-        alert("Gagal mengirim pesan admin.");
-        console.error(error);
-      }
-    });
-
-    // Pemain listen chat balasan dari admin (moderator)
-    function startPlayerChatListener() {
-      // Unsubscribe previous listener kalau ada
-      if (chatUnsubscribe) chatUnsubscribe();
-
-      const chatMessages = document.getElementById('chat-messages');
-      chatMessages.innerHTML = "";
-
-      const chatDoc = db.collection('chats').doc(currentPlayer.name);
-
-      // Listen chat realtime
-      chatUnsubscribe = chatDoc.collection('messages')
-        .orderBy('createdAt')
-        .onSnapshot(snapshot => {
-          chatMessages.innerHTML = "";
-          snapshot.forEach(doc => {
-            const msg = doc.data();
-            const div = document.createElement('div');
-            div.style.marginBottom = '8px';
-            div.style.padding = '6px 10px';
-            div.style.borderRadius = '6px';
-            if (msg.from === 'player') {
-              div.style.background = '#4b6cb7';
-              div.style.color = 'white';
-              div.style.textAlign = 'right';
-              div.textContent = `Kamu: ${msg.text}`;
-            } else if (msg.from === 'admin') {
-              div.style.background = '#d1e7ff';
-              div.style.textAlign = 'left';
-              div.textContent = `Tuhan: ${msg.text}`;
-            }
-            chatMessages.appendChild(div);
-          });
-          chatMessages.scrollTop = chatMessages.scrollHeight;
+        const gameDoc = db.collection("games").doc(code);
+        const docSnap = await gameDoc.get();
+        if (docSnap.exists) {
+          alert("Kode putaran sudah ada.");
+          return;
+        }
+        await gameDoc.set({
+          roles: roles
         });
-
-      // Kirim chat message
-      const sendBtn = document.getElementById('chat-send-btn');
-      const input = document.getElementById('chat-input');
-
-      sendBtn.onclick = async () => {
-        const text = input.value.trim();
-        if (!text) return;
-        try {
-          await chatDoc.collection('messages').add({
-            text,
-            from: 'player',
-            createdAt: firebase.firestore.FieldValue.serverTimestamp()
-          });
-          input.value = "";
-        } catch (error) {
-          alert("Gagal mengirim pesan chat.");
-          console.error(error);
-        }
-      };
-
-      // Kirim dengan enter di input
-      input.onkeydown = (e) => {
-        if (e.key === 'Enter' && !e.shiftKey) {
-          e.preventDefault();
-          sendBtn.click();
-        }
-      };
+        alert("Putaran baru berhasil dibuat!");
+        document.getElementById("newGameCode").value = "";
+        document.getElementById("rolesInput").value = "";
+      } catch (err) {
+        alert("Gagal membuat putaran.");
+        console.error(err);
+      }
     }
 
+    // Load pemain dan peran untuk admin, tambahkan fitur tandai mati
+    async function loadPlayers() {
+      const code = document.getElementById("viewGameCode").value.trim().toUpperCase();
+      const ul = document.getElementById("playerList");
+      ul.innerHTML = "";
+
+      if (!code) {
+        alert("Masukkan kode putaran.");
+        return;
+      }
+
+      try {
+        const snapshot = await db
+          .collection("games")
+          .doc(code)
+          .collection("players")
+          .get();
+
+        if (snapshot.empty) {
+          ul.innerHTML = "<li>Belum ada pemain.</li>";
+          return;
+        }
+
+        snapshot.forEach((doc) => {
+          const data = doc.data();
+          const li = document.createElement("li");
+          li.textContent = `${doc.id}: ${data.role}`;
+          li.style.userSelect = "none";
+
+          if (data.isDead) {
+            li.style.textDecoration = "line-through";
+            li.style.color = "#c0392b";
+            li.title = "Sudah dibunuh (klik untuk toggle status)";
+          } else {
+            li.title = "Hidup (klik untuk toggle status)";
+            li.style.color = "#2f4858";
+          }
+
+          li.addEventListener("click", async () => {
+            const newStatus = !data.isDead;
+            try {
+              await db
+                .collection("games")
+                .doc(code)
+                .collection("players")
+                .doc(doc.id)
+                .update({ isDead: newStatus });
+              li.style.textDecoration = newStatus ? "line-through" : "none";
+              li.style.color = newStatus ? "#c0392b" : "#2f4858";
+              li.title = newStatus
+                ? "Sudah dibunuh (klik untuk toggle status)"
+                : "Hidup (klik untuk toggle status)";
+              data.isDead = newStatus;
+            } catch (err) {
+              alert("Gagal update status pemain.");
+              console.error(err);
+            }
+          });
+
+          ul.appendChild(li);
+        });
+      } catch (err) {
+        console.error(err);
+        alert("Gagal memuat pemain.");
+      }
+    }
+
+    // Show default section on load
+    showSection("register");
   </script>
 </body>
 </html>
