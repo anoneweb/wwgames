@@ -2,118 +2,163 @@
 <html lang="id">
 <head>
   <meta charset="UTF-8" />
-  <title>Werewolf Game - Login, Admin & Voting</title>
+  <title>Werewolf Game - Login & Admin</title>
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-firestore-compat.js"></script>
   <style>
-    /* (CSS sama seperti sebelumnya) */
-    * { box-sizing: border-box; }
+    /* Reset */
+    * {
+      box-sizing: border-box;
+    }
     body {
       font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-      background: #f4f7f9; color: #333; margin: 0; padding: 20px;
-      display: flex; flex-direction: column; align-items: center; min-height: 100vh;
+      background: #f4f7f9;
+      color: #333;
+      margin: 0;
+      padding: 20px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      min-height: 100vh;
     }
-    h1 { margin-bottom: 20px; color: #4b6cb7; text-shadow: 0 1px 3px rgba(0,0,0,0.1); }
+    h1 {
+      margin-bottom: 20px;
+      color: #4b6cb7;
+      text-shadow: 0 1px 3px rgba(0,0,0,0.1);
+    }
     .btn-group {
-      display: flex; gap: 12px; margin-bottom: 30px; flex-wrap: wrap; justify-content: center;
+      display: flex;
+      gap: 12px;
+      margin-bottom: 30px;
     }
     .btn-group button {
-      flex: 1; min-width: 140px; padding: 12px 0; border: none;
-      background: #4b6cb7; color: white; font-weight: 600; font-size: 16px; border-radius: 6px;
-      cursor: pointer; transition: background-color 0.3s ease;
+      flex: 1;
+      padding: 12px 0;
+      border: none;
+      background: #4b6cb7;
+      color: white;
+      font-weight: 600;
+      font-size: 16px;
+      border-radius: 6px;
+      cursor: pointer;
+      transition: background-color 0.3s ease;
       box-shadow: 0 3px 8px rgba(75,108,183,0.3);
     }
-    .btn-group button:hover { background: #3956a4; }
+    .btn-group button:hover {
+      background: #3956a4;
+    }
     .section {
-      width: 100%; max-width: 480px; background: white; padding: 25px 30px;
-      border-radius: 10px; box-shadow: 0 6px 18px rgba(75,108,183,0.15);
-      display: none; flex-direction: column;
+      width: 100%;
+      max-width: 480px;
+      background: white;
+      padding: 25px 30px;
+      border-radius: 10px;
+      box-shadow: 0 6px 18px rgba(75,108,183,0.15);
+      display: none;
+      flex-direction: column;
     }
-    .visible { display: flex; }
+    .visible {
+      display: flex;
+    }
     label {
-      font-weight: 600; margin-top: 15px; margin-bottom: 6px; color: #4b6cb7;
+      font-weight: 600;
+      margin-top: 15px;
+      margin-bottom: 6px;
+      color: #4b6cb7;
     }
-    input[type="text"], input[type="password"], textarea, select {
-      width: 100%; padding: 10px 14px; border: 1.8px solid #c1c9dd;
-      border-radius: 8px; font-size: 15px; font-family: inherit;
-      transition: border-color 0.3s ease; resize: vertical;
+    input[type="text"],
+    input[type="password"],
+    textarea {
+      width: 100%;
+      padding: 10px 14px;
+      border: 1.8px solid #c1c9dd;
+      border-radius: 8px;
+      font-size: 15px;
+      font-family: inherit;
+      transition: border-color 0.3s ease;
+      resize: vertical;
     }
-    input[type="text"]:focus, input[type="password"]:focus, textarea:focus, select:focus {
-      outline: none; border-color: #4b6cb7; box-shadow: 0 0 6px #4b6cb7aa;
+    input[type="text"]:focus,
+    input[type="password"]:focus,
+    textarea:focus {
+      outline: none;
+      border-color: #4b6cb7;
+      box-shadow: 0 0 6px #4b6cb7aa;
     }
     button[type="button"] {
-      margin-top: 25px; padding: 12px; font-size: 16px; font-weight: 700;
-      color: white; background: #4b6cb7; border: none; border-radius: 8px;
-      cursor: pointer; box-shadow: 0 5px 15px rgba(75,108,183,0.4);
+      margin-top: 25px;
+      padding: 12px;
+      font-size: 16px;
+      font-weight: 700;
+      color: white;
+      background: #4b6cb7;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+      box-shadow: 0 5px 15px rgba(75,108,183,0.4);
       transition: background-color 0.3s ease;
     }
-    button[type="button"]:hover { background: #3956a4; }
+    button[type="button"]:hover {
+      background: #3956a4;
+    }
     #role-display {
-      margin-top: 18px; font-weight: 700; font-size: 18px; color: #2f4858;
-      background: #d1e7ff; padding: 12px 18px; border-radius: 8px;
+      margin-top: 18px;
+      font-weight: 700;
+      font-size: 18px;
+      color: #2f4858;
+      background: #d1e7ff;
+      padding: 12px 18px;
+      border-radius: 8px;
       box-shadow: inset 0 0 8px #a6c1ff;
     }
-    #registerMsg, #loginMsg {
-      margin-top: 14px; font-weight: 600; min-height: 20px; color: #d9534f;
-    }
-    #registerMsg.success, #loginMsg.success { color: #28a745; }
-    #adminTools { margin-top: 25px; width: 100%; }
-    #playerList {
-      margin-top: 15px; max-height: 220px; overflow-y: auto; padding-left: 20px;
-      border: 1px solid #c1c9dd; border-radius: 8px; background: #f9fbff;
-    }
-    #playerList li {
-      margin-bottom: 8px; font-weight: 600; color: #2f4858; list-style: none;
-      padding-left: 20px; position: relative; cursor: pointer; user-select: none;
-      transition: color 0.2s ease;
-    }
-    #playerList li::before { content: "🐺"; position: absolute; left: 0; top: 2px; }
-
-    /* Voting Panel */
-    #votingPanel {
-      margin-top: 20px; padding: 20px; border: 2px solid #4b6cb7; border-radius: 12px;
-      background: #e8f0fe; width: 100%; max-width: 480px; display: none; flex-direction: column;
-    }
-    #votingPanel h3 {
-      margin-top: 0; color: #3956a4; text-align: center;
-    }
-    #voteSelect {
-      width: 100%; padding: 10px; font-size: 16px; border-radius: 8px; border: 1.8px solid #c1c9dd;
-      margin-top: 12px;
-    }
-    #voteBtn {
-      margin-top: 15px;
-      background-color: #3956a4;
-    }
-    #voteBtn:hover {
-      background-color: #2d3e7f;
-    }
-    #voteMsg {
+    #registerMsg,
+    #loginMsg {
       margin-top: 14px;
       font-weight: 600;
-      color: #2f4858;
       min-height: 20px;
-      text-align: center;
+      color: #d9534f; /* default red */
     }
-    #voteResults {
+    #registerMsg.success,
+    #loginMsg.success {
+      color: #28a745; /* green */
+    }
+    #adminTools {
+      margin-top: 25px;
+      width: 100%;
+    }
+    #playerList {
       margin-top: 15px;
-      background: white;
+      max-height: 220px;
+      overflow-y: auto;
+      padding-left: 20px;
       border: 1px solid #c1c9dd;
       border-radius: 8px;
-      padding: 12px;
-      max-height: 180px;
-      overflow-y: auto;
+      background: #f9fbff;
+    }
+    #playerList li {
+      margin-bottom: 8px;
       font-weight: 600;
       color: #2f4858;
+      list-style: none;
+      padding-left: 20px;
+      position: relative;
+      cursor: pointer;
+      user-select: none;
     }
-    /* Admin voting controls */
-    #adminVotingControls {
-      margin-top: 20px;
-      padding: 12px;
-      border: 2px solid #4b6cb7;
-      border-radius: 12px;
-      background: #e0eaff;
+    #playerList li::before {
+      content: "🐺";
+      position: absolute;
+      left: 0;
+      top: 2px;
+    }
+    @media (max-width: 520px) {
+      .btn-group {
+        flex-direction: column;
+      }
+      .btn-group button {
+        width: 100%;
+      }
     }
   </style>
 </head>
@@ -149,19 +194,6 @@
     <button type="button" onclick="loginAndJoin()">Login & Gabung Game</button>
     <div id="loginMsg" role="alert" aria-live="polite"></div>
     <div id="role-display" aria-live="polite" tabindex="0"></div>
-
-    <!-- Voting Panel muncul setelah login sukses -->
-    <div id="votingPanel" role="region" aria-live="polite" aria-label="Panel Voting">
-      <h3>Voting - Pilih Pemain yang Kamu Curigai</h3>
-      <select id="voteSelect" aria-label="Pilih pemain untuk divote">
-        <option value="">-- Pilih Pemain --</option>
-      </select>
-      <button type="button" id="voteBtn" onclick="submitVote()">Vote</button>
-      <div id="voteMsg" aria-live="polite"></div>
-
-      <h4>Hasil Voting Saat Ini:</h4>
-      <div id="voteResults" aria-live="polite"></div>
-    </div>
   </section>
 
   <!-- Admin -->
@@ -184,410 +216,312 @@
       <input type="text" id="viewGameCode" name="viewGameCode" placeholder="Contoh: PUTARAN1" autocomplete="off" />
       <button type="button" onclick="loadPlayers()">Lihat Pemain</button>
       <ul id="playerList" aria-live="polite" tabindex="0"></ul>
-
-      <!-- Admin Voting Controls -->
-      <div id="adminVotingControls">
-        <h3>Kontrol Voting Admin</h3>
-        <label for="adminVotingGameCode">Kode Putaran untuk Voting</label>
-        <input type="text" id="adminVotingGameCode" placeholder="Contoh: PUTARAN1" autocomplete="off" />
-        <button type="button" onclick="loadVotingResults()">Lihat Hasil Voting</button>
-        <button type="button" onclick="resetVoting()">Reset Voting</button>
-        <div id="adminVoteResults" style="margin-top:10px; max-height:180px; overflow-y:auto; font-weight:bold; color:#2f4858;"></div>
-      </div>
     </div>
   </section>
 
-<script>
-  // Firebase config
-  const firebaseConfig = {
-    apiKey: "AIzaSyD5rn8JWl9WjmKkEgnX7XzZwHGW3x2VQqQ",
-    authDomain: "warewolf-game-ef2fd.firebaseapp.com",
-    projectId: "warewolf-game-ef2fd",
-    storageBucket: "warewolf-game-ef2fd.appspot.com",
-    messagingSenderId: "1234567890",
-    appId: "1:1234567890:web:abcdef123456",
-  };
+  <script>
+    // Firebase config, ganti dengan config firebase kamu sendiri
+    // For Firebase JS SDK v7.20.0 and later, measurementId is optional
+const firebaseConfig = {
+  apiKey: "AIzaSyD5rn8JWl9WjmKkEgnX7XzZwHGW3x2VQqQ",
+  authDomain: "warewolf-game-ef2fd.firebaseapp.com",
+  projectId: "warewolf-game-ef2fd",
+  storageBucket: "warewolf-game-ef2fd.firebasestorage.app",
+  messagingSenderId: "342790419722",
+  appId: "1:342790419722:web:e51e9b9c1c54286729f6f3",
+  measurementId: "G-6VE9WCE2E2"
+};
 
-  // Init Firebase
-  firebase.initializeApp(firebaseConfig);
-  const db = firebase.firestore();
+    // Initialize Firebase
+    firebase.initializeApp(firebaseConfig);
+    const db = firebase.firestore();
 
-  // Admin password (ubah sesuai kebutuhan)
-  const ADMIN_PASSWORD = "admin123";
+    // Simple admin password (sesuaikan sesuai kebutuhan)
+    const ADMIN_PASSWORD = "demodemo";
 
-  // Tampilkan section sesuai klik tombol
-  function showSection(name) {
-    ["register", "login", "admin"].forEach(sec => {
-      document.getElementById(sec + "-section").classList.remove("visible");
-    });
-    document.getElementById(name + "-section").classList.add("visible");
-  }
-
-  // Register pemain baru
-  async function registerPlayer() {
-    const name = document.getElementById("regName").value.trim();
-    const password = document.getElementById("regPassword").value.trim();
-    const msg = document.getElementById("registerMsg");
-
-    msg.textContent = "";
-    msg.classList.remove("success");
-
-    if (!name || !password) {
-      msg.textContent = "Nama dan password harus diisi.";
-      return;
-    }
-
-    try {
-      const playerDoc = await db.collection("players").doc(name).get();
-      if (playerDoc.exists) {
-        msg.textContent = "Nama pemain sudah terdaftar.";
-        return;
-      }
-
-      await db.collection("players").doc(name).set({
-        password: password
+    // Show section helper
+    function showSection(section) {
+      const sections = {
+        register: "register-section",
+        login: "login-section",
+        admin: "admin-section"
+      };
+      Object.values(sections).forEach(id => {
+        document.getElementById(id).classList.remove("visible");
       });
+      document.getElementById(sections[section]).classList.add("visible");
 
-      msg.textContent = "Pendaftaran berhasil! Silakan login.";
-      msg.classList.add("success");
-      document.getElementById("regName").value = "";
-      document.getElementById("regPassword").value = "";
-    } catch (err) {
-      console.error(err);
-      msg.textContent = "Terjadi kesalahan saat mendaftar.";
-    }
-  }
-
-  // Login dan join game
-  async function loginAndJoin() {
-    const name = document.getElementById("loginName").value.trim();
-    const password = document.getElementById("loginPassword").value.trim();
-    const gameCodeRaw = document.getElementById("loginGameCode").value.trim();
-    const gameCode = gameCodeRaw.toUpperCase();
-
-    const msg = document.getElementById("loginMsg");
-    const roleDisplay = document.getElementById("role-display");
-    const votingPanel = document.getElementById("votingPanel");
-    const voteSelect = document.getElementById("voteSelect");
-    const voteMsg = document.getElementById("voteMsg");
-    const voteResults = document.getElementById("voteResults");
-
-    msg.textContent = "";
-    roleDisplay.textContent = "";
-    votingPanel.style.display = "none";
-    voteSelect.innerHTML = `<option value="">-- Pilih Pemain --</option>`;
-    voteMsg.textContent = "";
-    voteResults.textContent = "";
-
-    if (!name || !password || !gameCode) {
-      msg.textContent = "Semua kolom harus diisi.";
-      return;
+      // Clear messages and inputs when switch
+      clearMessages();
     }
 
-    try {
-      // Cek pemain terdaftar
-      const playerDoc = await db.collection("players").doc(name).get();
-      if (!playerDoc.exists) {
-        msg.textContent = "Nama pemain belum terdaftar.";
-        return;
-      }
-      if (playerDoc.data().password !== password) {
-        msg.textContent = "Password salah.";
-        return;
-      }
-
-      // Cek putaran ada atau tidak
-      const gameDoc = await db.collection("games").doc(gameCode).get();
-      if (!gameDoc.exists) {
-        msg.textContent = "Kode putaran tidak ditemukan.";
-        return;
-      }
-
-      // Cek apakah pemain sudah tergabung di putaran ini
-      const playerInGameDoc = await db.collection("games").doc(gameCode).collection("players").doc(name).get();
-
-      let assignedRole = null;
-      if (!playerInGameDoc.exists) {
-        // Ambil daftar role yang tersedia
-        const roles = gameDoc.data().roles || [];
-
-        // Dapatkan peran acak dari daftar role
-        if (roles.length === 0) {
-          msg.textContent = "Putaran belum memiliki daftar peran.";
-          return;
-        }
-        assignedRole = roles[Math.floor(Math.random() * roles.length)];
-
-        // Simpan data pemain di putaran
-        await db.collection("games").doc(gameCode).collection("players").doc(name).set({
-          role: assignedRole,
-          isDead: false
-        });
-      } else {
-        assignedRole = playerInGameDoc.data().role || "Tidak diketahui";
-      }
-
-      roleDisplay.textContent = `Selamat! Peranmu adalah: ${assignedRole}`;
-
-      // Siapkan voting panel dan daftar pemain untuk voting
-      votingPanel.style.display = "flex";
-      voteMsg.textContent = "";
-      voteResults.textContent = "";
-
-      // Ambil daftar pemain di putaran untuk voting, kecuali diri sendiri
-      const playersSnapshot = await db.collection("games").doc(gameCode).collection("players").get();
-      voteSelect.innerHTML = `<option value="">-- Pilih Pemain --</option>`;
-      playersSnapshot.forEach(doc => {
-        if (doc.id !== name) {
-          const opt = document.createElement("option");
-          opt.value = doc.id;
-          opt.textContent = doc.id;
-          voteSelect.appendChild(opt);
-        }
-      });
-
-      // Mulai listen realtime voting results
-      listenVotingResults(gameCode);
-
-      // Simpan info login di global (buat voting)
-      window.currentUser = { name, gameCode };
-
-      // Bersihkan input login
-      document.getElementById("loginName").value = "";
-      document.getElementById("loginPassword").value = "";
-      document.getElementById("loginGameCode").value = "";
-
-    } catch (err) {
-      console.error(err);
-      msg.textContent = "Terjadi kesalahan saat login.";
-    }
-  }
-
-  // Submit vote
-  async function submitVote() {
-    const voteSelect = document.getElementById("voteSelect");
-    const voteMsg = document.getElementById("voteMsg");
-    if (!window.currentUser) {
-      voteMsg.textContent = "Kamu belum login.";
-      return;
-    }
-    const votedPlayer = voteSelect.value;
-    if (!votedPlayer) {
-      voteMsg.textContent = "Pilih pemain dulu sebelum vote.";
-      return;
-    }
-    voteMsg.textContent = "";
-
-    try {
-      // Simpan vote di subkoleksi votes dengan doc id = nama voter agar satu orang satu suara
-      await db.collection("games").doc(window.currentUser.gameCode)
-        .collection("votes").doc(window.currentUser.name).set({
-          voteFor: votedPlayer,
-          timestamp: firebase.firestore.FieldValue.serverTimestamp()
-        });
-
-      voteMsg.textContent = `Kamu memilih: ${votedPlayer}`;
-    } catch (err) {
-      console.error(err);
-      voteMsg.textContent = "Gagal mengirim vote.";
-    }
-  }
-
-  // Listen realtime voting results dan tampilkan di pemain dan admin
-  let unsubscribeVotesListener = null;
-  function listenVotingResults(gameCode) {
-    // Stop previous listener kalau ada
-    if (unsubscribeVotesListener) {
-      unsubscribeVotesListener();
-    }
-
-    const voteResults = document.getElementById("voteResults");
-    voteResults.textContent = "Memuat hasil voting...";
-
-    unsubscribeVotesListener = db.collection("games").doc(gameCode).collection("votes")
-      .onSnapshot(snapshot => {
-        if (snapshot.empty) {
-          voteResults.textContent = "Belum ada voting.";
-          return;
-        }
-        // Hitung suara per pemain
-        const counts = {};
-        snapshot.forEach(doc => {
-          const voteFor = doc.data().voteFor;
-          if (voteFor) counts[voteFor] = (counts[voteFor] || 0) + 1;
-        });
-
-        // Format hasil tampilkan jumlah suara
-        const lines = Object.entries(counts)
-          .sort((a, b) => b[1] - a[1]) // Urut dari suara terbanyak
-          .map(([player, count]) => `${player}: ${count} suara`);
-
-        voteResults.textContent = lines.length > 0 ? lines.join("\n") : "Belum ada voting.";
-      }, err => {
-        console.error(err);
-        voteResults.textContent = "Gagal memuat hasil voting.";
-      });
-  }
-
-  // Admin functions
-  function checkAdmin() {
-    const pass = document.getElementById("adminPassword").value.trim();
-    const tools = document.getElementById("adminTools");
-    if (pass === ADMIN_PASSWORD) {
-      tools.style.display = "block";
+    function clearMessages() {
+      document.getElementById("registerMsg").textContent = "";
+      document.getElementById("loginMsg").textContent = "";
+      document.getElementById("role-display").textContent = "";
       document.getElementById("adminPassword").value = "";
-    } else {
-      alert("Password admin salah!");
-    }
-  }
-
-  async function createGame() {
-    const code = document.getElementById("newGameCode").value.trim().toUpperCase();
-    const rolesRaw = document.getElementById("rolesInput").value.trim();
-    if (!code || !rolesRaw) {
-      alert("Kode putaran dan daftar peran harus diisi.");
-      return;
-    }
-
-    const roles = rolesRaw.split("\n").map(r => r.trim()).filter(r => r.length > 0);
-
-    if (roles.length === 0) {
-      alert("Daftar peran tidak valid.");
-      return;
-    }
-
-    try {
-      const gameDoc = await db.collection("games").doc(code).get();
-      if (gameDoc.exists) {
-        alert("Kode putaran sudah ada.");
-        return;
-      }
-
-      await db.collection("games").doc(code).set({
-        roles: roles
-      });
-
-      alert(`Game dengan kode ${code} berhasil dibuat.`);
       document.getElementById("newGameCode").value = "";
       document.getElementById("rolesInput").value = "";
-    } catch (err) {
-      console.error(err);
-      alert("Gagal membuat game.");
-    }
-  }
-
-  async function loadPlayers() {
-    const code = document.getElementById("viewGameCode").value.trim().toUpperCase();
-    const list = document.getElementById("playerList");
-    list.innerHTML = "";
-
-    if (!code) {
-      alert("Isi kode putaran dulu.");
-      return;
+      document.getElementById("viewGameCode").value = "";
+      document.getElementById("playerList").innerHTML = "";
     }
 
-    try {
-      const playersSnapshot = await db.collection("games").doc(code).collection("players").get();
-      if (playersSnapshot.empty) {
-        list.innerHTML = "<li>Tidak ada pemain pada putaran ini.</li>";
+    // Register player (nama & password global, tanpa peran)
+    async function registerPlayer() {
+      const name = document.getElementById("regName").value.trim();
+      const password = document.getElementById("regPassword").value.trim();
+      const msg = document.getElementById("registerMsg");
+
+      if (!name || !password) {
+        msg.textContent = "Nama dan password harus diisi.";
+        msg.className = "";
         return;
       }
 
-      playersSnapshot.forEach(doc => {
-        const data = doc.data();
-        const li = document.createElement("li");
-        li.textContent = `${doc.id} — Peran: ${data.role || "?"} — Status: ${data.isDead ? "Mati" : "Hidup"}`;
-        li.style.color = data.isDead ? "#a33" : "#2f4858";
-        li.title = "Klik untuk toggle status mati/hidup";
+      try {
+        const playerDoc = db.collection("players").doc(name);
+        const docSnap = await playerDoc.get();
 
-        li.onclick = async () => {
-          const newStatus = !data.isDead;
-          try {
-            await db.collection("games").doc(code).collection("players").doc(doc.id).update({
-              isDead: newStatus
-            });
-            li.textContent = `${doc.id} — Peran: ${data.role || "?"} — Status: ${newStatus ? "Mati" : "Hidup"}`;
-            li.style.color = newStatus ? "#a33" : "#2f4858";
-            data.isDead = newStatus;
-          } catch (err) {
-            alert("Gagal mengubah status pemain.");
+        if (docSnap.exists) {
+          msg.textContent = "Nama pemain sudah terdaftar.";
+          msg.className = "";
+          return;
+        }
+
+        await playerDoc.set({
+          password: password
+        });
+
+        msg.textContent = "Pendaftaran berhasil! Silakan login.";
+        msg.className = "success";
+        document.getElementById("regName").value = "";
+        document.getElementById("regPassword").value = "";
+      } catch (err) {
+        msg.textContent = "Gagal mendaftar pemain.";
+        msg.className = "";
+        console.error(err);
+      }
+    }
+
+    // Login & join game putaran, tampilkan peran
+    async function loginAndJoin() {
+      const name = document.getElementById("loginName").value.trim();
+      const password = document.getElementById("loginPassword").value.trim();
+      const gameCode = document.getElementById("loginGameCode").value.trim().toUpperCase();
+      const msg = document.getElementById("loginMsg");
+      const roleDisplay = document.getElementById("role-display");
+
+      msg.textContent = "";
+      roleDisplay.textContent = "";
+
+      if (!name || !password || !gameCode) {
+        msg.textContent = "Semua kolom harus diisi.";
+        msg.className = "";
+        return;
+      }
+
+      try {
+        // Cek login pemain global
+        const playerDoc = db.collection("players").doc(name);
+        const docSnap = await playerDoc.get();
+
+        if (!docSnap.exists) {
+          msg.textContent = "Nama pemain belum terdaftar.";
+          msg.className = "";
+          return;
+        }
+
+        if (docSnap.data().password !== password) {
+          msg.textContent = "Password salah.";
+          msg.className = "";
+          return;
+        }
+
+        // Cek apakah game putaran ada
+        const gameDoc = db.collection("games").doc(gameCode);
+        const gameSnap = await gameDoc.get();
+
+        if (!gameSnap.exists) {
+          msg.textContent = "Kode putaran tidak ditemukan.";
+          msg.className = "";
+          return;
+        }
+
+        // Cek apakah pemain sudah join putaran
+        const playerInGameDoc = gameDoc.collection("players").doc(name);
+        const playerInGameSnap = await playerInGameDoc.get();
+
+        if (!playerInGameSnap.exists) {
+          // Assign role random dari daftar roles di game
+          const roles = gameSnap.data().roles || [];
+          if (roles.length === 0) {
+            msg.textContent = "Peran belum disiapkan oleh admin.";
+            msg.className = "";
+            return;
           }
-        };
 
-        list.appendChild(li);
-      });
-    } catch (err) {
-      console.error(err);
-      alert("Gagal memuat pemain.");
+          // Ambil role acak dari yang belum dipakai
+          const takenRolesSnap = await gameDoc.collection("players").get();
+          const takenRoles = [];
+          takenRolesSnap.forEach(doc => {
+            const r = doc.data().role;
+            if (r) takenRoles.push(r);
+          });
+
+          // Role yang tersedia
+          const availableRoles = roles.filter(r => !takenRoles.includes(r));
+
+          if (availableRoles.length === 0) {
+            msg.textContent = "Semua peran sudah terisi.";
+            msg.className = "";
+            return;
+          }
+
+          // Pilih random role
+          const randomIndex = Math.floor(Math.random() * availableRoles.length);
+          const selectedRole = availableRoles[randomIndex];
+
+          await playerInGameDoc.set({
+            role: selectedRole,
+            isDead: false
+          });
+          roleDisplay.textContent = `Peran kamu: ${selectedRole}`;
+        } else {
+          // Sudah join, tampilkan role & status
+          const pdata = playerInGameSnap.data();
+          const statusText = pdata.isDead ? " (Sudah dibunuh)" : "";
+          roleDisplay.textContent = `Peran kamu: ${pdata.role}${statusText}`;
+        }
+
+        msg.textContent = "";
+        msg.className = "success";
+
+        // Bersihkan input login
+        document.getElementById("loginName").value = "";
+        document.getElementById("loginPassword").value = "";
+        document.getElementById("loginGameCode").value = "";
+      } catch (err) {
+        console.error(err);
+        msg.textContent = "Terjadi kesalahan. Coba lagi.";
+        msg.className = "";
+      }
     }
-  }
 
-  // Admin voting controls: lihat hasil voting
-  async function loadVotingResults() {
-    const code = document.getElementById("adminVotingGameCode").value.trim().toUpperCase();
-    const container = document.getElementById("adminVoteResults");
-    container.textContent = "";
-
-    if (!code) {
-      alert("Isi kode putaran untuk voting.");
-      return;
+    // Admin login
+    function checkAdmin() {
+      const input = document.getElementById("adminPassword").value.trim();
+      if (input === ADMIN_PASSWORD) {
+        document.getElementById("adminTools").style.display = "block";
+        alert("Login admin berhasil!");
+      } else {
+        alert("Password admin salah!");
+        document.getElementById("adminTools").style.display = "none";
+      }
+      document.getElementById("adminPassword").value = "";
     }
 
-    try {
-      const votesSnapshot = await db.collection("games").doc(code).collection("votes").get();
-      if (votesSnapshot.empty) {
-        container.textContent = "Belum ada voting.";
+    // Create game putaran baru
+    async function createGame() {
+      const code = document.getElementById("newGameCode").value.trim().toUpperCase();
+      const rolesText = document.getElementById("rolesInput").value.trim();
+      if (!code) {
+        alert("Masukkan kode putaran.");
+        return;
+      }
+      if (!rolesText) {
+        alert("Masukkan daftar peran.");
+        return;
+      }
+      const roles = rolesText.split("\n").map(r => r.trim()).filter(r => r.length > 0);
+
+      try {
+        const gameDoc = db.collection("games").doc(code);
+        const docSnap = await gameDoc.get();
+        if (docSnap.exists) {
+          alert("Kode putaran sudah ada.");
+          return;
+        }
+        await gameDoc.set({
+          roles: roles
+        });
+        alert("Putaran baru berhasil dibuat!");
+        document.getElementById("newGameCode").value = "";
+        document.getElementById("rolesInput").value = "";
+      } catch (err) {
+        alert("Gagal membuat putaran.");
+        console.error(err);
+      }
+    }
+
+    // Load pemain dan peran untuk admin, tambahkan fitur tandai mati
+    async function loadPlayers() {
+      const code = document.getElementById("viewGameCode").value.trim().toUpperCase();
+      const ul = document.getElementById("playerList");
+      ul.innerHTML = "";
+
+      if (!code) {
+        alert("Masukkan kode putaran.");
         return;
       }
 
-      // Hitung suara per pemain
-      const counts = {};
-      votesSnapshot.forEach(doc => {
-        const voteFor = doc.data().voteFor;
-        if (voteFor) counts[voteFor] = (counts[voteFor] || 0) + 1;
-      });
+      try {
+        const snapshot = await db
+          .collection("games")
+          .doc(code)
+          .collection("players")
+          .get();
 
-      const lines = Object.entries(counts)
-        .sort((a, b) => b[1] - a[1])
-        .map(([player, count]) => `${player}: ${count} suara`);
+        if (snapshot.empty) {
+          ul.innerHTML = "<li>Belum ada pemain.</li>";
+          return;
+        }
 
-      container.textContent = lines.length > 0 ? lines.join("\n") : "Belum ada voting.";
-    } catch (err) {
-      console.error(err);
-      container.textContent = "Gagal memuat hasil voting.";
+        snapshot.forEach((doc) => {
+          const data = doc.data();
+          const li = document.createElement("li");
+          li.textContent = `${doc.id}: ${data.role}`;
+          li.style.userSelect = "none";
+
+          if (data.isDead) {
+            li.style.textDecoration = "line-through";
+            li.style.color = "#c0392b";
+            li.title = "Sudah dibunuh (klik untuk toggle status)";
+          } else {
+            li.title = "Hidup (klik untuk toggle status)";
+            li.style.color = "#2f4858";
+          }
+
+          li.addEventListener("click", async () => {
+            const newStatus = !data.isDead;
+            try {
+              await db
+                .collection("games")
+                .doc(code)
+                .collection("players")
+                .doc(doc.id)
+                .update({ isDead: newStatus });
+              li.style.textDecoration = newStatus ? "line-through" : "none";
+              li.style.color = newStatus ? "#c0392b" : "#2f4858";
+              li.title = newStatus
+                ? "Sudah dibunuh (klik untuk toggle status)"
+                : "Hidup (klik untuk toggle status)";
+              data.isDead = newStatus;
+            } catch (err) {
+              alert("Gagal update status pemain.");
+              console.error(err);
+            }
+          });
+
+          ul.appendChild(li);
+        });
+      } catch (err) {
+        console.error(err);
+        alert("Gagal memuat pemain.");
+      }
     }
-  }
 
-  // Reset voting (hapus semua dokumen votes pada putaran)
-  async function resetVoting() {
-    const code = document.getElementById("adminVotingGameCode").value.trim().toUpperCase();
-    if (!code) {
-      alert("Isi kode putaran untuk reset voting.");
-      return;
-    }
-
-    if (!confirm(`Yakin reset semua voting untuk putaran ${code}?`)) return;
-
-    try {
-      const votesRef = db.collection("games").doc(code).collection("votes");
-      const votesSnapshot = await votesRef.get();
-
-      const batch = db.batch();
-      votesSnapshot.forEach(doc => {
-        batch.delete(doc.ref);
-      });
-      await batch.commit();
-
-      alert("Voting berhasil di-reset.");
-      loadVotingResults();
-    } catch (err) {
-      console.error(err);
-      alert("Gagal reset voting.");
-    }
-  }
-
-  // Inisialisasi section default
-  showSection("register");
-</script>
+    // Show default section on load
+    showSection("register");
+  </script>
 </body>
 </html>
