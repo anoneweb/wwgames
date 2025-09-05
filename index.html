@@ -2,7 +2,7 @@
 <html lang="id">
 <head>
   <meta charset="UTF-8" />
-  <title>Werewolf Game dengan Password Pemain</title>
+  <title>Werewolf Game with Global Player Login</title>
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-firestore-compat.js"></script>
@@ -10,101 +10,80 @@
     body {
       font-family: Arial, sans-serif;
       max-width: 600px;
-      margin: 30px auto;
+      margin: 20px auto;
     }
-    label,
-    input,
-    textarea,
-    button {
+    input, button, label {
       display: block;
-      margin: 10px 0;
-      width: 100%;
+      margin: 8px 0;
       padding: 8px;
+      width: 100%;
       box-sizing: border-box;
     }
-    textarea {
-      height: 100px;
-    }
-    .section {
-      display: none;
-      border-top: 1px solid #ddd;
-      margin-top: 20px;
-      padding-top: 20px;
-    }
-    .visible {
-      display: block;
-    }
-    #role-display {
-      font-size: 1.2em;
-      font-weight: bold;
-      margin-top: 15px;
-    }
-    #playerList li {
-      margin: 5px 0;
-    }
-    .btn-group button {
-      width: 49%;
-      margin-right: 2%;
-    }
+    .section { display: none; }
+    .visible { display: block; }
+    #role-display { font-weight: bold; margin-top: 15px; }
+    .btn-group button { width: 48%; margin-right: 4%; }
   </style>
 </head>
 <body>
   <h1>Werewolf Game</h1>
 
   <div class="btn-group">
-    <button onclick="showSection('player')">Masuk sebagai Pemain</button>
-    <button onclick="showSection('admin')">Masuk sebagai Admin</button>
+    <button onclick="showSection('register')">Daftar Pemain</button>
+    <button onclick="showSection('login')">Login Pemain</button>
+    <button onclick="showSection('admin')">Admin</button>
   </div>
 
-  <!-- Mode Pemain -->
-  <div id="player-section" class="section">
-    <h2>Mode Pemain</h2>
-    <label>Kode Putaran:</label>
-    <input type="text" id="playerGameCode" placeholder="Contoh: PUTARAN1" />
+  <!-- Daftar Pemain -->
+  <div id="register-section" class="section">
+    <h2>Daftar Pemain Baru</h2>
+    <label>Nama Pemain</label>
+    <input type="text" id="regName" placeholder="Nama kamu" />
+    <label>Password</label>
+    <input type="password" id="regPassword" placeholder="Password" />
+    <button onclick="registerPlayer()">Daftar</button>
+    <div id="registerMsg" style="color:red;"></div>
+  </div>
 
-    <label>Nama Pemain:</label>
-    <input type="text" id="playerName" placeholder="Nama kamu" />
-
-    <label>Password Pemain:</label>
-    <input type="password" id="playerPassword" placeholder="Password kamu" />
-
-    <button onclick="joinGame()">Gabung Game</button>
-
-    <div id="playerMessage" style="color:red;"></div>
+  <!-- Login Pemain -->
+  <div id="login-section" class="section">
+    <h2>Login Pemain</h2>
+    <label>Nama Pemain</label>
+    <input type="text" id="loginName" placeholder="Nama kamu" />
+    <label>Password</label>
+    <input type="password" id="loginPassword" placeholder="Password" />
+    <label>Kode Putaran</label>
+    <input type="text" id="loginGameCode" placeholder="Contoh: PUTARAN1" />
+    <button onclick="loginAndJoin()">Login & Gabung Game</button>
+    <div id="loginMsg" style="color:red;"></div>
     <div id="role-display"></div>
   </div>
 
-  <!-- Mode Admin -->
+  <!-- Admin -->
   <div id="admin-section" class="section">
-    <h2>Mode Admin</h2>
-    <label>Password Admin:</label>
+    <h2>Admin</h2>
+    <label>Password Admin</label>
     <input type="password" id="adminPassword" placeholder="Password admin" />
     <button onclick="checkAdmin()">Masuk</button>
 
     <div id="adminTools" style="display:none;">
       <h3>Buat Putaran Baru</h3>
-      <label>Kode Putaran:</label>
+      <label>Kode Putaran</label>
       <input type="text" id="newGameCode" placeholder="Contoh: PUTARAN2" />
-
-      <label>Daftar Peran (1 per baris):</label>
-      <textarea
-        id="rolesInput"
-        placeholder="Contoh:\nWerewolf\nSeer\nVillager\nVillager"
-      ></textarea>
-
+      <label>Daftar Peran (1 per baris)</label>
+      <textarea id="rolesInput" placeholder="Werewolf\nSeer\nVillager\nVillager"></textarea>
       <button onclick="createGame()">Buat Game</button>
 
       <h3>Lihat Pemain</h3>
-      <label>Kode Putaran:</label>
+      <label>Kode Putaran</label>
       <input type="text" id="viewGameCode" placeholder="Contoh: PUTARAN1" />
       <button onclick="loadPlayers()">Lihat Pemain</button>
-
       <ul id="playerList"></ul>
     </div>
   </div>
 
   <script>
-    // GANTI DENGAN FIREBASE CONFIG KAMU
+    // Firebase config, ganti dengan milik kamu
 // For Firebase JS SDK v7.20.0 and later, measurementId is optional
 const firebaseConfig = {
   apiKey: "AIzaSyD5rn8JWl9WjmKkEgnX7XzZwHGW3x2VQqQ",
@@ -119,68 +98,96 @@ const firebaseConfig = {
     const db = firebase.firestore();
 
     function showSection(section) {
-      document.getElementById("player-section").classList.remove("visible");
-      document.getElementById("admin-section").classList.remove("visible");
-      if (section === "player") {
-        document.getElementById("player-section").classList.add("visible");
-      } else {
-        document.getElementById("admin-section").classList.add("visible");
-      }
+      ["register", "login", "admin"].forEach((s) => {
+        document.getElementById(s + "-section").classList.remove("visible");
+      });
+      document.getElementById(section + "-section").classList.add("visible");
     }
 
-    // ADMIN PASSWORD
+    // Admin password sederhana
     const ADMIN_PASS = "werewolf123";
     function checkAdmin() {
       const pass = document.getElementById("adminPassword").value;
       if (pass === ADMIN_PASS) {
         document.getElementById("adminTools").style.display = "block";
       } else {
-        alert("Password salah.");
+        alert("Password admin salah.");
       }
     }
 
-    // PEMAIN JOIN / LOGIN GAME
-    async function joinGame() {
-      const code = document
-        .getElementById("playerGameCode")
-        .value.trim()
-        .toUpperCase();
-      const name = document.getElementById("playerName").value.trim();
-      const password = document.getElementById("playerPassword").value;
-      const msg = document.getElementById("playerMessage");
+    // Register pemain global
+    async function registerPlayer() {
+      const name = document.getElementById("regName").value.trim();
+      const password = document.getElementById("regPassword").value;
+      const msg = document.getElementById("registerMsg");
+      msg.textContent = "";
+      if (!name || !password) {
+        msg.textContent = "Nama dan password wajib diisi.";
+        return;
+      }
+      try {
+        const playerDoc = await db.collection("players_global").doc(name).get();
+        if (playerDoc.exists) {
+          msg.textContent = "Nama sudah terdaftar, silakan pilih nama lain.";
+          return;
+        }
+        await db.collection("players_global").doc(name).set({ password });
+        msg.style.color = "green";
+        msg.textContent = "Pendaftaran berhasil! Silakan login.";
+      } catch (err) {
+        console.error(err);
+        msg.textContent = "Terjadi kesalahan saat mendaftar.";
+      }
+    }
+
+    // Login dan gabung putaran
+    async function loginAndJoin() {
+      const name = document.getElementById("loginName").value.trim();
+      const password = document.getElementById("loginPassword").value;
+      const gameCode = document.getElementById("loginGameCode").value.trim().toUpperCase();
+      const msg = document.getElementById("loginMsg");
       const roleDisplay = document.getElementById("role-display");
       msg.textContent = "";
       roleDisplay.textContent = "";
 
-      if (!code || !name || !password) {
+      if (!name || !password || !gameCode) {
         msg.textContent = "Semua kolom wajib diisi.";
         return;
       }
 
       try {
-        const gameRef = db.collection("games").doc(code);
+        // Cek data pemain global
+        const playerDoc = await db.collection("players_global").doc(name).get();
+        if (!playerDoc.exists) {
+          msg.textContent = "Nama pemain tidak terdaftar, silakan daftar dulu.";
+          return;
+        }
+        if (playerDoc.data().password !== password) {
+          msg.textContent = "Password salah.";
+          return;
+        }
+
+        // Cek game
+        const gameRef = db.collection("games").doc(gameCode);
         const gameDoc = await gameRef.get();
         if (!gameDoc.exists) {
           msg.textContent = "Kode putaran tidak ditemukan.";
           return;
         }
 
-        const playerRef = gameRef.collection("players").doc(name);
-        const playerDoc = await playerRef.get();
+        // Cek pemain di putaran ini
+        const playerInGameRef = gameRef.collection("players").doc(name);
+        const playerInGameDoc = await playerInGameRef.get();
 
-        if (playerDoc.exists) {
-          // Jika pemain sudah terdaftar, cek password
-          if (playerDoc.data().password === password) {
-            roleDisplay.textContent = `Halo ${name}, peran kamu: ${playerDoc.data().role}`;
-          } else {
-            msg.textContent = "Password salah untuk pemain ini.";
-          }
+        if (playerInGameDoc.exists) {
+          // Sudah terdaftar di putaran, tampilkan peran
+          roleDisplay.textContent = `Halo ${name}, peran kamu: ${playerInGameDoc.data().role}`;
           return;
         }
 
-        // Jika pemain baru, ambil role acak yang belum dipakai
-        const allPlayers = await gameRef.collection("players").get();
-        const assignedRoles = allPlayers.docs.map((doc) => doc.data().role);
+        // Kalau pemain baru di putaran, bagi peran acak dari sisa
+        const allPlayersSnap = await gameRef.collection("players").get();
+        const assignedRoles = allPlayersSnap.docs.map((doc) => doc.data().role);
         const allRoles = [...gameDoc.data().roles];
         let roleCount = {};
         allRoles.forEach((r) => (roleCount[r] = (roleCount[r] || 0) + 1));
@@ -189,6 +196,7 @@ const firebaseConfig = {
         const availableRoles = Object.entries(roleCount)
           .filter(([_, c]) => c > 0)
           .map(([r]) => r);
+
         if (availableRoles.length === 0) {
           msg.textContent = "Peran habis, game penuh.";
           return;
@@ -197,8 +205,9 @@ const firebaseConfig = {
         const randomRole =
           availableRoles[Math.floor(Math.random() * availableRoles.length)];
 
-        // Simpan data pemain baru dengan password dan role
-        await playerRef.set({ role: randomRole, password: password });
+        // Simpan peran pemain di putaran
+        await playerInGameRef.set({ role: randomRole });
+
         roleDisplay.textContent = `Halo ${name}, peran kamu: ${randomRole}`;
       } catch (err) {
         console.error(err);
@@ -206,12 +215,9 @@ const firebaseConfig = {
       }
     }
 
-    // BUAT GAME BARU (ADMIN)
+    // Buat game baru (admin)
     async function createGame() {
-      const code = document
-        .getElementById("newGameCode")
-        .value.trim()
-        .toUpperCase();
+      const code = document.getElementById("newGameCode").value.trim().toUpperCase();
       const roles = document
         .getElementById("rolesInput")
         .value.trim()
@@ -233,12 +239,9 @@ const firebaseConfig = {
       }
     }
 
-    // LIHAT PEMAIN (ADMIN)
+    // Lihat pemain di putaran (admin)
     async function loadPlayers() {
-      const code = document
-        .getElementById("viewGameCode")
-        .value.trim()
-        .toUpperCase();
+      const code = document.getElementById("viewGameCode").value.trim().toUpperCase();
       const ul = document.getElementById("playerList");
       ul.innerHTML = "";
 
