@@ -143,6 +143,8 @@
       list-style: none;
       padding-left: 20px;
       position: relative;
+      cursor: pointer;
+      user-select: none;
     }
     #playerList li::before {
       content: "🐺";
@@ -218,8 +220,8 @@
   </section>
 
   <script>
-    // Firebase config, ganti dengan milik kamu
-// For Firebase JS SDK v7.20.0 and later, measurementId is optional
+    // Firebase config, ganti dengan config firebase kamu sendiri
+    // For Firebase JS SDK v7.20.0 and later, measurementId is optional
 const firebaseConfig = {
   apiKey: "AIzaSyD5rn8JWl9WjmKkEgnX7XzZwHGW3x2VQqQ",
   authDomain: "warewolf-game-ef2fd.firebaseapp.com",
@@ -229,162 +231,229 @@ const firebaseConfig = {
   appId: "1:342790419722:web:e51e9b9c1c54286729f6f3",
   measurementId: "G-6VE9WCE2E2"
 };
+
+    // Initialize Firebase
     firebase.initializeApp(firebaseConfig);
     const db = firebase.firestore();
 
+    // Simple admin password (sesuaikan sesuai kebutuhan)
+    const ADMIN_PASSWORD = "admin123";
+
+    // Show section helper
     function showSection(section) {
-      ["register", "login", "admin"].forEach((s) => {
-        document.getElementById(s + "-section").classList.remove("visible");
+      const sections = {
+        register: "register-section",
+        login: "login-section",
+        admin: "admin-section"
+      };
+      Object.values(sections).forEach(id => {
+        document.getElementById(id).classList.remove("visible");
       });
-      document.getElementById(section + "-section").classList.add("visible");
+      document.getElementById(sections[section]).classList.add("visible");
+
+      // Clear messages and inputs when switch
       clearMessages();
     }
+
     function clearMessages() {
       document.getElementById("registerMsg").textContent = "";
       document.getElementById("loginMsg").textContent = "";
       document.getElementById("role-display").textContent = "";
+      document.getElementById("adminPassword").value = "";
+      document.getElementById("newGameCode").value = "";
+      document.getElementById("rolesInput").value = "";
+      document.getElementById("viewGameCode").value = "";
+      document.getElementById("playerList").innerHTML = "";
     }
 
-    // Admin password sederhana
-    const ADMIN_PASS = "werewolf123";
-    function checkAdmin() {
-      const pass = document.getElementById("adminPassword").value;
-      if (pass === ADMIN_PASS) {
-        document.getElementById("adminTools").style.display = "block";
-      } else {
-        alert("Password admin salah.");
-      }
-    }
-
-    // Register pemain global
+    // Register player (nama & password global, tanpa peran)
     async function registerPlayer() {
       const name = document.getElementById("regName").value.trim();
-      const password = document.getElementById("regPassword").value;
+      const password = document.getElementById("regPassword").value.trim();
       const msg = document.getElementById("registerMsg");
-      msg.textContent = "";
-      msg.classList.remove("success");
+
       if (!name || !password) {
-        msg.textContent = "Nama dan password wajib diisi.";
+        msg.textContent = "Nama dan password harus diisi.";
+        msg.className = "";
         return;
       }
+
       try {
-        const playerDoc = await db.collection("players_global").doc(name).get();
-        if (playerDoc.exists) {
-          msg.textContent = "Nama sudah terdaftar, silakan pilih nama lain.";
+        const playerDoc = db.collection("players").doc(name);
+        const docSnap = await playerDoc.get();
+
+        if (docSnap.exists) {
+          msg.textContent = "Nama pemain sudah terdaftar.";
+          msg.className = "";
           return;
         }
-        await db.collection("players_global").doc(name).set({ password });
+
+        await playerDoc.set({
+          password: password
+        });
+
         msg.textContent = "Pendaftaran berhasil! Silakan login.";
-        msg.classList.add("success");
+        msg.className = "success";
+        document.getElementById("regName").value = "";
+        document.getElementById("regPassword").value = "";
       } catch (err) {
+        msg.textContent = "Gagal mendaftar pemain.";
+        msg.className = "";
         console.error(err);
-        msg.textContent = "Terjadi kesalahan saat mendaftar.";
       }
     }
 
-    // Login dan gabung putaran
+    // Login & join game putaran, tampilkan peran
     async function loginAndJoin() {
       const name = document.getElementById("loginName").value.trim();
-      const password = document.getElementById("loginPassword").value;
+      const password = document.getElementById("loginPassword").value.trim();
       const gameCode = document.getElementById("loginGameCode").value.trim().toUpperCase();
       const msg = document.getElementById("loginMsg");
       const roleDisplay = document.getElementById("role-display");
+
       msg.textContent = "";
       roleDisplay.textContent = "";
-      msg.classList.remove("success");
 
       if (!name || !password || !gameCode) {
-        msg.textContent = "Semua kolom wajib diisi.";
+        msg.textContent = "Semua kolom harus diisi.";
+        msg.className = "";
         return;
       }
 
       try {
-        // Cek data pemain global
-        const playerDoc = await db.collection("players_global").doc(name).get();
-        if (!playerDoc.exists) {
-          msg.textContent = "Nama pemain tidak terdaftar, silakan daftar dulu.";
+        // Cek login pemain global
+        const playerDoc = db.collection("players").doc(name);
+        const docSnap = await playerDoc.get();
+
+        if (!docSnap.exists) {
+          msg.textContent = "Nama pemain belum terdaftar.";
+          msg.className = "";
           return;
         }
-        if (playerDoc.data().password !== password) {
+
+        if (docSnap.data().password !== password) {
           msg.textContent = "Password salah.";
+          msg.className = "";
           return;
         }
 
-        // Cek game
-        const gameRef = db.collection("games").doc(gameCode);
-        const gameDoc = await gameRef.get();
-        if (!gameDoc.exists) {
+        // Cek apakah game putaran ada
+        const gameDoc = db.collection("games").doc(gameCode);
+        const gameSnap = await gameDoc.get();
+
+        if (!gameSnap.exists) {
           msg.textContent = "Kode putaran tidak ditemukan.";
+          msg.className = "";
           return;
         }
 
-        // Cek pemain di putaran ini
-        const playerInGameRef = gameRef.collection("players").doc(name);
-        const playerInGameDoc = await playerInGameRef.get();
+        // Cek apakah pemain sudah join putaran
+        const playerInGameDoc = gameDoc.collection("players").doc(name);
+        const playerInGameSnap = await playerInGameDoc.get();
 
-        if (playerInGameDoc.exists) {
-          // Sudah terdaftar di putaran, tampilkan peran
-          roleDisplay.textContent = `Halo ${name}, peran kamu: ${playerInGameDoc.data().role}`;
-          msg.classList.add("success");
-          return;
+        if (!playerInGameSnap.exists) {
+          // Assign role random dari daftar roles di game
+          const roles = gameSnap.data().roles || [];
+          if (roles.length === 0) {
+            msg.textContent = "Peran belum disiapkan oleh admin.";
+            msg.className = "";
+            return;
+          }
+
+          // Ambil role acak dari yang belum dipakai
+          const takenRolesSnap = await gameDoc.collection("players").get();
+          const takenRoles = [];
+          takenRolesSnap.forEach(doc => {
+            const r = doc.data().role;
+            if (r) takenRoles.push(r);
+          });
+
+          // Role yang tersedia
+          const availableRoles = roles.filter(r => !takenRoles.includes(r));
+
+          if (availableRoles.length === 0) {
+            msg.textContent = "Semua peran sudah terisi.";
+            msg.className = "";
+            return;
+          }
+
+          // Pilih random role
+          const randomIndex = Math.floor(Math.random() * availableRoles.length);
+          const selectedRole = availableRoles[randomIndex];
+
+          await playerInGameDoc.set({
+            role: selectedRole,
+            isDead: false
+          });
+          roleDisplay.textContent = `Peran kamu: ${selectedRole}`;
+        } else {
+          // Sudah join, tampilkan role & status
+          const pdata = playerInGameSnap.data();
+          const statusText = pdata.isDead ? " (Sudah dibunuh)" : "";
+          roleDisplay.textContent = `Peran kamu: ${pdata.role}${statusText}`;
         }
 
-        // Kalau pemain baru di putaran, bagi peran acak dari sisa
-        const allPlayersSnap = await gameRef.collection("players").get();
-        const assignedRoles = allPlayersSnap.docs.map((doc) => doc.data().role);
-        const allRoles = [...gameDoc.data().roles];
-        let roleCount = {};
-        allRoles.forEach((r) => (roleCount[r] = (roleCount[r] || 0) + 1));
-        assignedRoles.forEach((r) => (roleCount[r]--));
+        msg.textContent = "";
+        msg.className = "success";
 
-        const availableRoles = Object.entries(roleCount)
-          .filter(([_, c]) => c > 0)
-          .map(([r]) => r);
-
-        if (availableRoles.length === 0) {
-          msg.textContent = "Peran habis, game penuh.";
-          return;
-        }
-
-        const randomRole =
-          availableRoles[Math.floor(Math.random() * availableRoles.length)];
-
-        // Simpan peran pemain di putaran
-        await playerInGameRef.set({ role: randomRole });
-
-        roleDisplay.textContent = `Halo ${name}, peran kamu: ${randomRole}`;
-        msg.classList.add("success");
+        // Bersihkan input login
+        document.getElementById("loginName").value = "";
+        document.getElementById("loginPassword").value = "";
+        document.getElementById("loginGameCode").value = "";
       } catch (err) {
         console.error(err);
-        msg.textContent = "Terjadi kesalahan.";
+        msg.textContent = "Terjadi kesalahan. Coba lagi.";
+        msg.className = "";
       }
     }
 
-    // Buat game baru (admin)
+    // Admin login
+    function checkAdmin() {
+      const input = document.getElementById("adminPassword").value.trim();
+      if (input === ADMIN_PASSWORD) {
+        document.getElementById("adminTools").style.display = "block";
+        alert("Login admin berhasil!");
+      } else {
+        alert("Password admin salah!");
+        document.getElementById("adminTools").style.display = "none";
+      }
+      document.getElementById("adminPassword").value = "";
+    }
+
+    // Create game putaran baru
     async function createGame() {
       const code = document.getElementById("newGameCode").value.trim().toUpperCase();
-      const roles = document
-        .getElementById("rolesInput")
-        .value.trim()
-        .split("\n")
-        .map((r) => r.trim())
-        .filter(Boolean);
-
-      if (!code || roles.length === 0) {
-        alert("Isi semua data.");
+      const rolesText = document.getElementById("rolesInput").value.trim();
+      if (!code) {
+        alert("Masukkan kode putaran.");
         return;
       }
+      if (!rolesText) {
+        alert("Masukkan daftar peran.");
+        return;
+      }
+      const roles = rolesText.split("\n").map(r => r.trim()).filter(r => r.length > 0);
 
       try {
-        await db.collection("games").doc(code).set({ roles });
-        alert("Game berhasil dibuat!");
+        const gameDoc = db.collection("games").doc(code);
+        const docSnap = await gameDoc.get();
+        if (docSnap.exists) {
+          alert("Kode putaran sudah ada.");
+          return;
+        }
+        await gameDoc.set({
+          roles: roles
+        });
+        alert("Putaran baru berhasil dibuat!");
+        document.getElementById("newGameCode").value = "";
+        document.getElementById("rolesInput").value = "";
       } catch (err) {
+        alert("Gagal membuat putaran.");
         console.error(err);
-        alert("Gagal membuat game.");
       }
     }
 
-    // Lihat pemain di putaran (admin)
+    // Load pemain dan peran untuk admin, tambahkan fitur tandai mati
     async function loadPlayers() {
       const code = document.getElementById("viewGameCode").value.trim().toUpperCase();
       const ul = document.getElementById("playerList");
@@ -401,14 +470,48 @@ const firebaseConfig = {
           .doc(code)
           .collection("players")
           .get();
+
         if (snapshot.empty) {
           ul.innerHTML = "<li>Belum ada pemain.</li>";
           return;
         }
 
         snapshot.forEach((doc) => {
+          const data = doc.data();
           const li = document.createElement("li");
-          li.textContent = `${doc.id}: ${doc.data().role}`;
+          li.textContent = `${doc.id}: ${data.role}`;
+          li.style.userSelect = "none";
+
+          if (data.isDead) {
+            li.style.textDecoration = "line-through";
+            li.style.color = "#c0392b";
+            li.title = "Sudah dibunuh (klik untuk toggle status)";
+          } else {
+            li.title = "Hidup (klik untuk toggle status)";
+            li.style.color = "#2f4858";
+          }
+
+          li.addEventListener("click", async () => {
+            const newStatus = !data.isDead;
+            try {
+              await db
+                .collection("games")
+                .doc(code)
+                .collection("players")
+                .doc(doc.id)
+                .update({ isDead: newStatus });
+              li.style.textDecoration = newStatus ? "line-through" : "none";
+              li.style.color = newStatus ? "#c0392b" : "#2f4858";
+              li.title = newStatus
+                ? "Sudah dibunuh (klik untuk toggle status)"
+                : "Hidup (klik untuk toggle status)";
+              data.isDead = newStatus;
+            } catch (err) {
+              alert("Gagal update status pemain.");
+              console.error(err);
+            }
+          });
+
           ul.appendChild(li);
         });
       } catch (err) {
@@ -418,7 +521,7 @@ const firebaseConfig = {
     }
 
     // Show default section on load
-    showSection('register');
+    showSection("register");
   </script>
 </body>
 </html>
