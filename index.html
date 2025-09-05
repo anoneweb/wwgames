@@ -1,171 +1,112 @@
-<!DOCTYPE html>
+ <!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Werewolf Game</title>
+  <title>Werewolf Game - Player</title>
   <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-app-compat.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-auth-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-firestore-compat.js"></script>
+  <style>
+    body { font-family: Arial, sans-serif; max-width: 600px; margin: 30px auto; }
+    label, input, button { display: block; margin: 10px 0; }
+    input, button { padding: 8px; font-size: 16px; }
+    #role-display { margin-top: 20px; font-size: 1.2em; font-weight: bold; }
+    #message { color: red; }
+  </style>
 </head>
 <body>
-  <h1>Werewolf Game</h1>
 
-  <div id="login-section">
-    <button id="login-btn">Login dengan GitHub</button>
-  </div>
+  <h1>Werewolf Game - Player</h1>
 
-  <div id="admin-section" style="display:none;">
-    <h2>Admin Dashboard</h2>
-    <label>
-      Jumlah Pemain:
-      <input type="number" id="totalPlayers" min="1" max="30" value="10" />
-    </label>
-    <h3>Peran</h3>
-    <div>
-      <label>Werewolf: <input type="number" id="role-werewolf" min="0" value="3" /></label><br />
-      <label>Seer: <input type="number" id="role-seer" min="0" value="1" /></label><br />
-      <label>Witch: <input type="number" id="role-witch" min="0" value="1" /></label><br />
-      <label>Villager: <input type="number" id="role-villager" min="0" value="5" /></label><br />
-    </div>
-    <button id="generate-btn">Generate & Simpan Peran</button>
+  <label for="gameCode">Kode Akses Putaran:</label>
+  <input type="text" id="gameCode" placeholder="Masukkan kode putaran" />
 
-    <h3>Data Pemain & Peran</h3>
-    <ul id="players-list"></ul>
-  </div>
+  <label for="playerName">Nama Pemain:</label>
+  <input type="text" id="playerName" placeholder="Masukkan nama kamu" />
 
-  <div id="player-section" style="display:none;">
-    <h2>Peran Anda</h2>
-    <p id="player-role"></p>
-  </div>
+  <button id="joinBtn">Gabung Game</button>
+
+  <div id="message"></div>
+  <div id="role-display"></div>
 
   <script>
-    // TODO: Ganti dengan config Firebase kamu sendiri
+    // Ganti dengan config Firebase kamu
     const firebaseConfig = {
       apiKey: "YOUR_API_KEY",
       authDomain: "YOUR_AUTH_DOMAIN",
       projectId: "YOUR_PROJECT_ID",
-      // ...
     };
 
     firebase.initializeApp(firebaseConfig);
-    const auth = firebase.auth();
     const db = firebase.firestore();
 
-    const loginBtn = document.getElementById('login-btn');
-    const loginSection = document.getElementById('login-section');
-    const adminSection = document.getElementById('admin-section');
-    const playerSection = document.getElementById('player-section');
-    const playersList = document.getElementById('players-list');
-    const playerRoleDisplay = document.getElementById('player-role');
+    const gameCodeInput = document.getElementById('gameCode');
+    const playerNameInput = document.getElementById('playerName');
+    const joinBtn = document.getElementById('joinBtn');
+    const roleDisplay = document.getElementById('role-display');
+    const messageDiv = document.getElementById('message');
 
-    loginBtn.onclick = () => {
-      const provider = new firebase.auth.GithubAuthProvider();
-      auth.signInWithPopup(provider)
-        .catch(console.error);
-    };
+    joinBtn.onclick = async () => {
+      messageDiv.textContent = '';
+      roleDisplay.textContent = '';
 
-    auth.onAuthStateChanged(async user => {
-      if (user) {
-        loginSection.style.display = 'none';
+      const gameCode = gameCodeInput.value.trim().toUpperCase();
+      const playerName = playerNameInput.value.trim();
 
-        // Simple role check: jika email admin (ubah sesuai email kamu)
-        const adminEmails = ['admin@example.com']; // Ganti dengan email adminmu
-        if (adminEmails.includes(user.email)) {
-          adminSection.style.display = 'block';
-          playerSection.style.display = 'none';
-          loadPlayers();
-        } else {
-          adminSection.style.display = 'none';
-          playerSection.style.display = 'block';
-          showPlayerRole(user.uid);
+      if (!gameCode || !playerName) {
+        messageDiv.textContent = 'Kode putaran dan nama pemain wajib diisi.';
+        return;
+      }
+
+      try {
+        // Cek game tersedia
+        const gameDoc = await db.collection('games').doc(gameCode).get();
+        if (!gameDoc.exists) {
+          messageDiv.textContent = 'Kode putaran tidak ditemukan.';
+          return;
         }
-      } else {
-        loginSection.style.display = 'block';
-        adminSection.style.display = 'none';
-        playerSection.style.display = 'none';
-      }
-    });
+        const gameData = gameDoc.data();
 
-    function generateRoles(totalPlayers, rolesCount) {
-      const sumRoles = Object.values(rolesCount).reduce((a, b) => a + b, 0);
-      if (sumRoles !== totalPlayers) {
-        alert(`Jumlah total peran (${sumRoles}) tidak sama dengan jumlah pemain (${totalPlayers})`);
-        return null;
-      }
+        // Cek apakah pemain sudah terdaftar di game ini
+        const playerRef = db.collection('games').doc(gameCode).collection('players').doc(playerName);
+        const playerDoc = await playerRef.get();
 
-      let rolesArray = [];
-      for (const [role, count] of Object.entries(rolesCount)) {
-        for (let i = 0; i < count; i++) {
-          rolesArray.push(role);
+        if (playerDoc.exists) {
+          // Kalau sudah ada, tampilkan peran
+          roleDisplay.textContent = `Halo ${playerName}, peran kamu adalah: ${playerDoc.data().role}`;
+          return;
         }
-      }
 
-      for (let i = rolesArray.length -1; i > 0; i--) {
-        const j = Math.floor(Math.random() * (i + 1));
-        [rolesArray[i], rolesArray[j]] = [rolesArray[j], rolesArray[i]];
-      }
+        // Kalau belum ada, generate peran dari sisa peran yang belum dipakai
+        const playersSnapshot = await db.collection('games').doc(gameCode).collection('players').get();
+        const assignedRoles = playersSnapshot.docs.map(doc => doc.data().role);
+        const availableRoles = [...gameData.roles]; // roles disimpan array per putaran
 
-      return rolesArray;
-    }
+        // Hitung sisa peran yang belum dipakai
+        let roleCount = {};
+        availableRoles.forEach(r => roleCount[r] = (roleCount[r] || 0) + 1);
+        assignedRoles.forEach(r => roleCount[r] = roleCount[r] - 1);
 
-    document.getElementById('generate-btn').onclick = async () => {
-      const totalPlayers = parseInt(document.getElementById('totalPlayers').value);
-      const rolesCount = {
-        Werewolf: parseInt(document.getElementById('role-werewolf').value),
-        Seer: parseInt(document.getElementById('role-seer').value),
-        Witch: parseInt(document.getElementById('role-witch').value),
-        Villager: parseInt(document.getElementById('role-villager').value),
-      };
-
-      const roles = generateRoles(totalPlayers, rolesCount);
-      if (!roles) return;
-
-      // Clear previous data
-      const playersRef = db.collection('players');
-      const snapshot = await playersRef.get();
-      snapshot.forEach(doc => {
-        playersRef.doc(doc.id).delete();
-      });
-
-      // Simpan ke firestore (berurut)
-      for (let i = 0; i < totalPlayers; i++) {
-        await playersRef.add({
-          playerNumber: i + 1,
-          role: roles[i],
-          uid: null, // nanti bisa di-assign saat pemain login
-        });
-      }
-
-      loadPlayers();
-      alert('Peran sudah digenerate dan disimpan.');
-    };
-
-    async function loadPlayers() {
-      playersList.innerHTML = '';
-      const snapshot = await db.collection('players').orderBy('playerNumber').get();
-      snapshot.forEach(doc => {
-        const data = doc.data();
-        const li = document.createElement('li');
-        li.textContent = `Player ${data.playerNumber}: ${data.role}`;
-        playersList.appendChild(li);
-      });
-    }
-
-    async function showPlayerRole(uid) {
-      const snapshot = await db.collection('players').get();
-      let playerRole = 'Belum mendapat peran';
-
-      snapshot.forEach(doc => {
-        const data = doc.data();
-        if (data.uid === uid) {
-          playerRole = data.role;
+        // Filter role yang masih ada jumlahnya > 0
+        const remainingRoles = Object.entries(roleCount).filter(([r, c]) => c > 0).map(([r]) => r);
+        if (remainingRoles.length === 0) {
+          messageDiv.textContent = 'Maaf, peran untuk putaran ini sudah penuh.';
+          return;
         }
-      });
 
-      playerRoleDisplay.textContent = playerRole;
+        // Pilih peran random dari remainingRoles
+        const randomRole = remainingRoles[Math.floor(Math.random() * remainingRoles.length)];
+
+        // Simpan pemain dan peran ke firestore
+        await playerRef.set({ role: randomRole });
+
+        roleDisplay.textContent = `Halo ${playerName}, peran kamu adalah: ${randomRole}`;
+
+      } catch (err) {
+        console.error(err);
+        messageDiv.textContent = 'Terjadi kesalahan, coba lagi.';
+      }
     }
-
   </script>
 </body>
 </html>
